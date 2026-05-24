@@ -17,8 +17,7 @@ from src.fetcher import fetch_all_sources
 from src.parser import parse_and_dedupe
 from src.speed_tester import test_channels_concurrent
 from src.ffmpeg_validator import validate_batch, cleanup as ffmpeg_cleanup
-from src.classifier import classify_and_filter
-from src.generator import generate_outputs
+from src.generator import generate_outputs_from_demo
 from src.merger import merge_channels_by_name
 from src.ip_resolver import get_resolver, matches_region
 from src.blacklist_filter import get_blacklist_filter
@@ -153,20 +152,29 @@ async def main():
         merged_channels = blacklist_filter.filter_channels(merged_channels)
         print(f"📊 黑名单过滤后: {len(merged_channels)} (减少 {before - len(merged_channels)})")
 
+    # Demo 筛选和排序（核心）
     if ENABLE_DEMO_FILTER:
         before = len(merged_channels)
-        merged_channels = filter_and_order_by_demo(merged_channels)
-        print(f"📊 Demo筛选后: {len(merged_channels)} (减少 {before - len(merged_channels)})")
+        # 注意：filter_and_order_by_demo 返回 (ordered_channels, category_map)
+        ordered_channels, category_map = filter_and_order_by_demo(merged_channels)
+        print(f"📊 Demo筛选后: {len(ordered_channels)} (减少 {before - len(ordered_channels)})")
+        if not ordered_channels:
+            print("❌ Demo 筛选后无频道，尝试不筛选")
+            ordered_channels = merged_channels
+    else:
+        ordered_channels = merged_channels
+        category_map = {}
 
-    merged_channels = filter_by_region(merged_channels)
-    if not merged_channels:
+    # 地域筛选
+    ordered_channels = filter_by_region(ordered_channels)
+    if not ordered_channels:
         print("❌ 过滤后无有效频道")
         return 1
 
-    classified = classify_and_filter(merged_channels)
-    generate_outputs(classified)
+    # 输出：直接使用 demo 顺序（ordered_channels 已包含 demo_category）
+    generate_outputs_from_demo(ordered_channels, category_map)
 
-    total = sum(len(lst) for lst in classified.values())
+    total = len(ordered_channels)
     print(f"🎉 完成！有效频道总数: {total}")
     ffmpeg_cleanup()
     await db.close()
