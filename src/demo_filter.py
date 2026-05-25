@@ -1,37 +1,21 @@
 # src/demo_filter.py
-# Demo 频道筛选与排序模块，支持精确匹配和宽松匹配
+# Demo 频道筛选与排序模块，支持包含匹配，输出未匹配频道
 
 from pathlib import Path
-import re
+from typing import List, Tuple
 from src.config import DEMO_FILE, OUTPUT_DIR
 from src.alias_matcher import get_alias_matcher
 
-try:
-    from src.config import DEMO_MATCH_MODE
-except ImportError:
-    DEMO_MATCH_MODE = "exact"
+# 匹配模式：'exact' 或 'contains'（推荐 contains）
+DEMO_MATCH_MODE = "contains"
 
-def normalize_for_demo(name: str) -> str:
-    """对 demo 频道名进行规范化，用于宽松匹配"""
-    # 转小写
-    name = name.lower()
-    # 去除空格
-    name = re.sub(r'\s+', '', name)
-    # 去除连字符和点号
-    name = re.sub(r'[-._]', '', name)
-    # 去除常见后缀
-    name = re.sub(r'(高清|频道|hd|标清|付费|备\d+)$', '', name)
-    return name
-
-def parse_demo_order_with_categories(demo_file: Path = DEMO_FILE):
-    """解析 demo.txt，返回 (分类列表, 原始频道名列表, 标准化后的频道名列表)"""
+def parse_demo_order_with_categories(demo_file: Path = DEMO_FILE) -> List[Tuple[str, str]]:
+    """解析 demo.txt，返回 [(分类, 标准化频道名), ...]"""
     if not demo_file.exists():
         print(f"⚠️ Demo 文件不存在: {demo_file}")
-        return [], [], []
+        return []
     matcher = get_alias_matcher()
-    categories = []
-    raw_names = []
-    norm_names = []
+    order = []
     current_category = None
     with open(demo_file, 'r', encoding='utf-8') as f:
         for line in f:
@@ -45,105 +29,94 @@ def parse_demo_order_with_categories(demo_file: Path = DEMO_FILE):
                 continue
             if current_category is not None:
                 demo_name = line
-                raw_names.append(demo_name)
                 if matcher:
                     demo_name = matcher.normalize(demo_name)
-                norm_names.append(demo_name)
-                categories.append(current_category)
+                order.append((current_category, demo_name))
             else:
-                raw_names.append(line)
-                norm_names.append(line)
-                categories.append("其他")
-    print(f"📋 从 demo.txt 解析到 {len(norm_names)} 个有序频道，共 {len(set(categories))} 个分类")
-    # 打印前10个标准化后的demo名用于调试
-    print(f"   Demo 名称样例（标准化后）: {norm_names[:10]}")
-    return categories, raw_names, norm_names
+                order.append(("其他", line))
+    print(f"📋 从 demo.txt 解析到 {len(order)} 个有序频道，共 {len(set(c for c,_ in order))} 个分类")
+    return order
 
-def filter_and_order_by_demo(channels: list, alias_matcher=None):
+def match_channel_name(channel_name: str, demo_name: str) -> bool:
+    """包含匹配：只要 demo_name 是 channel_name 的子串或反之即可"""
+    if DEMO_MATCH_MODE == "exact":
+        return channel_name == demo_name
+    else:
+        # 忽略大小写进行包含匹配
+        cn_lower = channel_name.lower()
+        dn_lower = demo_name.lower()
+        return dn_lower in cn_lower or cn_lower in dn_lower
+
+def filter_and_order_by_demo(channels: list) -> tuple:
     """
     根据 demo.txt 筛选并排序频道。
-    返回 (ordered_channels, unmatched_channels)
+    返回 (matched_channels, unmatched_channels)
+    matched_channels: 按 demo 顺序排列，每个频道增加 'demo_category' 字段
+    unmatched_channels: 未匹配的频道列表
     """
-    categories, raw_demo_names, demo_names = parse_demo_order_with_categories()
-    if not demo_names:
+    demo_order = parse_demo_order_with_categories()
+    if not demo_order:
         print("⚠️ demo.txt 为空，跳过筛选")
         return channels, []
 
-    # 建立倒排索引：频道名 -> 频道对象
+    # 建立频道名到频道的映射
     name_to_channel = {ch["name"]: ch for ch in channels}
-    # 打印前20个采集到的频道名（标准化后）用于调试
-    sample_channels = list(name_to_channel.keys())[:20]
-    print(f"   采集频道名样例（标准化后）: {sample_channels}")
-
     matched = []
+    unmatched = list(channels)  # 先复制全部，然后移除匹配的
     matched_names = set()
-    unmatched = []
+    matched_demo_items = set()
 
-    if DEMO_MATCH_MODE == "exact":
-        for idx, demo_name in enumerate(demo_names):
-            if demo_name in name_to_channel:
-                ch = name_to_channel[demo_name].copy()
-                ch["demo_category"] = categories[idx]
+    for category, demo_name in demo_order:
+        # 精确匹配优先
+        if demo_name in name_to_channel:
+            ch = name_to_channel[demo_name].copy()
+            ch["demo_category"] = category
+            if ch["name"] not in matched_names:
                 matched.append(ch)
-                matched_names.add(demo_name)
-            else:
-                # 尝试宽松匹配：去除标点、空格后比较
-                demo_simple = normalize_for_demo(demo_name)
-                found = False
-                for ch_name, ch in name_to_channel.items():
-                    if ch_name in matched_names:
-                        continue
-                    ch_simple = normalize_for_demo(ch_name)
-                    if ch_simple == demo_simple:
-                        ch_copy = ch.copy()
-                        ch_copy["demo_category"] = categories[idx]
-                        matched.append(ch_copy)
-                        matched_names.add(ch_name)
-                        print(f"🔧 宽松匹配成功: '{demo_name}' -> '{ch_name}'")
-                        found = True
-                        break
-                if not found:
-                    print(f"⚠️ Demo 未匹配 (精确): {demo_name} (分类: {categories[idx]})")
-    else:
-        # 包含匹配（较慢，但提供备用）
-        all_names = list(name_to_channel.keys())
-        for idx, demo_name in enumerate(demo_names):
-            if demo_name in name_to_channel:
-                ch = name_to_channel[demo_name].copy()
-                ch["demo_category"] = categories[idx]
-                matched.append(ch)
-                matched_names.add(demo_name)
+                matched_names.add(ch["name"])
+                matched_demo_items.add(demo_name)
                 continue
-            demo_lower = demo_name.lower()
-            found = False
-            for ch_name in all_names:
-                if ch_name in matched_names:
-                    continue
-                if demo_lower in ch_name.lower() or ch_name.lower() in demo_lower:
-                    ch = name_to_channel[ch_name].copy()
-                    ch["demo_category"] = categories[idx]
-                    matched.append(ch)
-                    matched_names.add(ch_name)
-                    found = True
-                    break
-            if not found:
-                print(f"⚠️ Demo 未匹配 (模糊): {demo_name} (分类: {categories[idx]})")
+        # 包含匹配（遍历未匹配的频道）
+        found = False
+        for ch in unmatched[:]:  # 遍历副本
+            if ch["name"] in matched_names:
+                continue
+            if match_channel_name(ch["name"], demo_name):
+                ch_copy = ch.copy()
+                ch_copy["demo_category"] = category
+                matched.append(ch_copy)
+                matched_names.add(ch["name"])
+                matched_demo_items.add(demo_name)
+                # 从未匹配列表中移除
+                unmatched = [c for c in unmatched if c["name"] != ch["name"]]
+                found = True
+                break
+        if not found:
+            # 可记录未匹配的 demo 项
+            pass
 
-    # 收集未匹配的频道
-    for ch in channels:
-        if ch["name"] not in matched_names:
-            unmatched.append(ch)
-
-    print(f"🎯 Demo 筛选：原始 {len(channels)} 个频道 -> 匹配 {len(matched)} 个频道，未匹配 {len(unmatched)} 个")
-
-    if unmatched:
-        shai_path = OUTPUT_DIR / "shai.txt"
-        with open(shai_path, "w", encoding="utf-8") as f:
-            f.write("# 未被 demo.txt 匹配的频道列表\n")
-            f.write("# 格式：频道名,URL\n\n")
-            for ch in unmatched:
-                url = ch["urls"][0] if ch.get("urls") else ch["url"]
-                f.write(f"{ch['name']},{url}\n")
-        print(f"📄 未匹配频道已写入 {shai_path}")
-
+    print(f"🎯 Demo 筛选：原始 {len(channels)} 个频道 -> 匹配 {len(matched)} 个频道，未匹配 {len(unmatched)} 个（匹配模式: {DEMO_MATCH_MODE}）")
+    
+    # 输出未匹配的 demo 项（帮助调试）
+    demo_names_set = set(demo_name for _, demo_name in demo_order)
+    matched_demo_set = matched_demo_items
+    unmatched_demo = demo_names_set - matched_demo_set
+    if unmatched_demo:
+        print(f"⚠️ 以下 demo 频道未匹配到任何采集频道（前20个）: {list(unmatched_demo)[:20]}")
+    
     return matched, unmatched
+
+def write_shai_file(unmatched_channels: list, matched_count: int, total_raw: int):
+    """输出未匹配的频道到 output/shai.txt"""
+    shai_path = OUTPUT_DIR / "shai.txt"
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    with open(shai_path, "w", encoding="utf-8") as f:
+        f.write(f"# Demo筛选丢弃的频道\n")
+        f.write(f"# 原始频道总数: {total_raw}\n")
+        f.write(f"# Demo匹配成功: {matched_count}\n")
+        f.write(f"# 丢弃数量: {len(unmatched_channels)}\n")
+        f.write(f"# 格式: 频道名,URL\n\n")
+        for ch in unmatched_channels:
+            url = ch["urls"][0] if ch.get("urls") else ch["url"]
+            f.write(f"{ch['name']},{url}\n")
+    print(f"📄 未匹配频道列表已保存到: {shai_path}")
