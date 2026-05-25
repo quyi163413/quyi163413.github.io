@@ -1,5 +1,5 @@
 # src/alias_matcher.py
-# 别名匹配模块：支持逗号或冒号分隔，仅精确匹配和正则匹配
+# 别名匹配模块：精确匹配优先，正则匹配，无子串匹配
 
 import re
 from pathlib import Path
@@ -14,22 +14,6 @@ class AliasMatcher:
         self.regex_mappings: Dict[re.Pattern, str] = {}
         self._load()
 
-    def _parse_line(self, line: str) -> tuple:
-        """解析一行，返回 (标准名, [别名列表])，支持逗号和冒号分隔"""
-        line = line.strip()
-        # 优先按逗号分割
-        if ',' in line:
-            parts = [p.strip() for p in line.split(',')]
-            if len(parts) >= 2:
-                return parts[0], parts[1:]
-        # 如果没有逗号，尝试冒号（兼容旧格式）
-        if ':' in line and not line.startswith('re:'):
-            parts = [p.strip() for p in line.split(':', 1)]
-            if len(parts) == 2:
-                print(f"⚠️ 行使用冒号分隔，建议改用逗号: {line}")
-                return parts[0], [parts[1]]
-        return None, []
-
     def _load(self):
         if not self.alias_file.exists():
             print(f"⚠️ 别名文件不存在: {self.alias_file}")
@@ -39,10 +23,20 @@ class AliasMatcher:
                 line = line.strip()
                 if not line or line.startswith('#'):
                     continue
-                standard, aliases = self._parse_line(line)
-                if not standard:
+                # 支持逗号分隔，兼容冒号（旧格式）
+                if ',' in line:
+                    parts = [p.strip() for p in line.split(',')]
+                elif ':' in line and not line.startswith('re:'):
+                    parts = [p.strip() for p in line.split(':', 1)]
+                    print(f"⚠️ 别名文件第 {line_num} 行使用冒号分隔，建议改用逗号: {line}")
+                else:
                     print(f"⚠️ 别名文件第 {line_num} 行格式错误，跳过: {line}")
                     continue
+                if len(parts) < 2:
+                    print(f"⚠️ 别名文件第 {line_num} 行缺少别名，跳过: {line}")
+                    continue
+                standard = parts[0].strip()
+                aliases = parts[1:]
                 for alias in aliases:
                     alias = alias.strip()
                     if not alias:
@@ -55,6 +49,7 @@ class AliasMatcher:
                         except re.error as e:
                             print(f"⚠️ 别名文件第 {line_num} 行正则错误: {e}")
                     else:
+                        # 精确匹配（整个字符串相等，忽略大小写）
                         self.exact_mappings[alias.lower()] = standard
         print(f"✅ 已加载别名规则：精确 {len(self.exact_mappings)}，正则 {len(self.regex_mappings)}")
 
@@ -62,7 +57,7 @@ class AliasMatcher:
         if not channel_name:
             return None
         name_lower = channel_name.lower()
-        # 精确匹配
+        # 精确匹配（最高优先级）
         if name_lower in self.exact_mappings:
             return self.exact_mappings[name_lower]
         # 正则匹配
