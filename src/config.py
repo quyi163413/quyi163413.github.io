@@ -23,6 +23,7 @@ IPTV_SOURCES = [
     "https://raw.githubusercontent.com/zzgpy1/Collect-IPTV/main/best_sorted.m3u",
     "https://raw.githubusercontent.com/dogwalkerg/IPTV-collect-tv-txt/main/others_output.txt",
     "https://raw.githubusercontent.com/zzgpy1/iptv-hybrid/main/iptv.m3u",
+    "https://tv.19860519.xyz/abc123",
 ]
 
 # ==================== 性能配置 ====================
