@@ -68,13 +68,19 @@ class AliasMatcher:
         name = re.sub(r'(?i)^CCTV(\d+)$', r'CCTV-\1', name)
         # CCTV1综合 -> CCTV-1
         name = re.sub(r'(?i)^CCTV(\d+)\s*综合', r'CCTV-\1', name)
+        # CCTV-1 高清 -> CCTV-1
+        name = re.sub(r'(?i)^(CCTV-\d+)\s*高清', r'\1', name)
         # CETV1 -> CETV-1
         name = re.sub(r'(?i)^CETV(\d+)$', r'CETV-\1', name)
-        # 去除常见后缀（高清、频道、HD等）
-        name = re.sub(r'\s*(高清|频道|HD|标清|付费|备\d*)$', '', name, flags=re.IGNORECASE)
+        # CETV-1 高清 -> CETV-1
+        name = re.sub(r'(?i)^(CETV-\d+)\s*高清', r'\1', name)
+        # 去除常见后缀（高清、频道、HD、标清、付费、备数字）
+        name = re.sub(r'\s*(高清|频道|HD|标清|付费|备\d+)$', '', name, flags=re.IGNORECASE)
         # 去除括号内容
         name = re.sub(r'[（(][^）)]*[）)]', '', name)
-        return name.strip()
+        # 去除多余空格
+        name = re.sub(r'\s+', ' ', name).strip()
+        return name
 
 _matcher = None
 
