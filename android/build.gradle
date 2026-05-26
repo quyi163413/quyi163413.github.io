@@ -1,11 +1,9 @@
-// Top-level build file
 buildscript {
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        // Android Gradle Plugin 8.1.0
         classpath 'com.android.tools.build:gradle:8.1.0'
     }
 }
@@ -14,5 +12,7 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        // 可选国内镜像
+        // maven { url 'https://maven.aliyun.com/repository/public' }
     }
 }
