@@ -1,11 +1,11 @@
 # src/demo_filter.py
-# Demo 频道筛选与排序模块，支持自动归类地方频道到对应省份分类
+# Demo 频道筛选与排序模块，支持地方频道和港澳台频道的自动归类
 
 from pathlib import Path
 from typing import List, Tuple
 from src.config import DEMO_FILE, OUTPUT_DIR
 from src.alias_matcher import get_alias_matcher
-from src.classifier import PROVINCES
+from src.classifier import PROVINCES, classify_channel
 
 DEMO_MATCH_MODE = "contains"
 
@@ -49,9 +49,9 @@ def match_channel_name(channel_name: str, demo_name: str) -> bool:
 def find_matching_demo_category(channel_name: str, demo_order: List[Tuple[str, str]]) -> str:
     """
     根据频道名查找最匹配的 demo 分类。
-    优先精确匹配 demo 中的频道名，否则根据省份关键词匹配分类。
+    优先匹配 demo 中的频道名，否则根据省份/港澳台关键词匹配分类。
     """
-    # 1. 精确或包含匹配 demo 中的频道名
+    # 1. 直接匹配 demo 中的频道名
     for category, demo_name in demo_order:
         if match_channel_name(channel_name, demo_name):
             return category
@@ -61,13 +61,20 @@ def find_matching_demo_category(channel_name: str, demo_order: List[Tuple[str, s
             for category, _ in demo_order:
                 if prov in category and ("频道" in category or "☘️" in category):
                     return category
+    # 3. 港澳台频道：根据关键词匹配 demo 中的“🌊港·澳·台”或类似分类
+    hk_tw_keywords = ["港", "澳", "台", "香港", "澳门", "台湾", "翡翠", "明珠", "凤凰", "tvb", "无线", "rthk", "hoy", "viu", "tvbs", "东森", "民视", "台视"]
+    for kw in hk_tw_keywords:
+        if kw.lower() in channel_name.lower():
+            for category, _ in demo_order:
+                if "港" in category or "澳" in category or "台" in category or "港澳台" in category:
+                    return category
     return None
 
 def filter_and_order_by_demo(channels: list) -> tuple:
     """
     返回 (matched_channels, unmatched_channels)
     matched_channels 按 demo 顺序排列，每个频道增加 'demo_category' 字段
-    未匹配但属于地方频道的，尝试自动归类到对应省份分类
+    未匹配的频道会尝试自动归类到对应分类（省份或港澳台）
     """
     demo_order = parse_demo_order_with_categories()
     if not demo_order:
@@ -109,12 +116,11 @@ def filter_and_order_by_demo(channels: list) -> tuple:
         if not found:
             pass
 
-    # 第二遍：处理剩余未匹配的地方频道，自动归类到省份分类
+    # 第二遍：处理剩余未匹配的频道，根据分类自动归类
     remaining = []
     for ch in unmatched:
-        # 只处理地方频道（已有 subcategory 字段）
-        if ch.get("subcategory") and ch["subcategory"] != "地方频道":
-            # 尝试找到匹配的 demo 分类
+        cat = classify_channel(ch)  # 获取频道的大类（央视/卫视/地方/港澳台/其他）
+        if cat in ["地方", "港澳台"]:
             demo_cat = find_matching_demo_category(ch["name"], demo_order)
             if demo_cat:
                 ch_copy = ch.copy()
@@ -122,6 +128,7 @@ def filter_and_order_by_demo(channels: list) -> tuple:
                 matched.append(ch_copy)
                 matched_names.add(ch["name"])
                 continue
+        # 如果仍然无法匹配，则归入剩余列表（会写入 shai.txt）
         remaining.append(ch)
 
     print(f"🎯 Demo 筛选：原始 {len(channels)} 个频道 -> 匹配 {len(matched)} 个频道，未匹配 {len(remaining)} 个")
