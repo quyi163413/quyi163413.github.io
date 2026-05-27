@@ -14,7 +14,6 @@ android {
         versionCode 1
         versionName "1.0"
 
-        // 构建时通过命令行参数传递 baseUrl，默认占位符
         def baseUrl = project.findProperty("baseUrl") ?: "https://YOUR_USERNAME.github.io/YOUR_REPO/"
         buildConfigField "String", "BASE_URL", "\"$baseUrl\""
     }
