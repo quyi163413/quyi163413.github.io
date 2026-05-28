@@ -17,7 +17,8 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.IPTVPlayer"
-        android:banner="@drawable/ic_launcher">
+        android:banner="@drawable/ic_launcher"
+        android:usesCleartextTraffic="true">   <!-- 重要：允许 HTTP/HTTPS 混合内容 -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
