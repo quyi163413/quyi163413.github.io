@@ -24,18 +24,13 @@ jobs:
       - name: 设置 Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: 准备 Gradle Wrapper
-        run: |
-          # 如果 gradle-wrapper.jar 缺失，则下载
-          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
-            mkdir -p gradle/wrapper
-            curl -L -o gradle/wrapper/gradle-wrapper.jar \
-              https://repo1.maven.org/maven2/org/gradle/gradle-wrapper/8.7/gradle-wrapper-8.7.jar
-          fi
-          chmod +x gradlew
+      - name: 设置 Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.7
 
       - name: 构建 Release APK
-        run: ./gradlew assembleRelease
+        run: gradle assembleRelease
 
       - name: 查找生成的 APK 文件
         id: find_apk
@@ -55,7 +50,7 @@ jobs:
           path: ${{ steps.find_apk.outputs.apk_path }}
           if-no-files-found: error
 
-      - name: 创建 GitHub Release（仅手动触发）
+      - name: 创建 GitHub Release
         if: github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v1
         with:
