@@ -1,5 +1,6 @@
 package com.iptv.player
 
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -10,7 +11,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.iptv.player.model.Channel
 import com.iptv.player.model.ChannelGroup
-import android.graphics.Color
 
 class ChannelListFragment : Fragment() {
 
@@ -49,9 +49,11 @@ class ChannelListFragment : Fragment() {
 
         DataManager.channelGroups.forEachIndexed { index, group ->
             val button = android.widget.Button(requireContext()).apply {
-                text = group.name.take(8)
+                text = group.name.take(10)
                 tag = index
-                setBackgroundResource(android.R.drawable.btn_default)
+                setBackgroundResource(R.drawable.group_button_bg)
+                setTextColor(Color.WHITE)
+                textSize = 12f
                 setPadding(40, 20, 40, 20)
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
