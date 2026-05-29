@@ -2,55 +2,67 @@ package com.iptv.player
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.KeyEvent
-import android.view.View
+import android.os.Handler
+import android.os.Looper
 import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
-    
+
     private lateinit var progressBar: ProgressBar
-    
+    private val mainHandler = Handler(Looper.getMainLooper())
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        
+
         progressBar = findViewById(R.id.progressBar)
-        
+
         loadChannels()
     }
-    
+
     private fun loadChannels() {
-        progressBar.visibility = View.VISIBLE
-        
-        lifecycleScope.launch {
-            val success = DataManager.loadChannels(this@MainActivity)
-            progressBar.visibility = View.GONE
-            
-            if (success && DataManager.allChannels.isNotEmpty()) {
-                // 启动播放界面
-                val intent = Intent(this@MainActivity, PlayerActivity::class.java)
-                startActivity(intent)
-                finish()
-            } else {
-                Toast.makeText(
-                    this@MainActivity,
-                    "加载频道列表失败，请检查网络连接",
-                    Toast.LENGTH_LONG
-                ).show()
+        progressBar.visibility = ProgressBar.VISIBLE
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val success = DataManager.loadChannels(this@MainActivity)
+                withContext(Dispatchers.Main) {
+                    progressBar.visibility = ProgressBar.GONE
+                    if (success && DataManager.allChannels.isNotEmpty()) {
+                        startActivity(Intent(this@MainActivity, PlayerActivity::class.java))
+                        finish()
+                    } else {
+                        Toast.makeText(
+                            this@MainActivity,
+                            "加载频道列表失败，请检查网络后重试",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        // 3秒后重试
+                        mainHandler.postDelayed({ loadChannels() }, 3000)
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    progressBar.visibility = ProgressBar.GONE
+                    Toast.makeText(
+                        this@MainActivity,
+                        "发生错误: ${e.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
             }
         }
     }
-    
-    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        // 按返回键退出应用
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            finish()
-            return true
-        }
-        return super.onKeyDown(keyCode, event)
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mainHandler.removeCallbacksAndMessages(null)
     }
 }
