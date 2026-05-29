@@ -5,7 +5,6 @@
     android:layout_height="match_parent"
     android:keepScreenOn="true">
     
-    <!-- 视频播放器 -->
     <com.google.android.exoplayer2.ui.PlayerView
         android:id="@+id/player_view"
         android:layout_width="match_parent"
@@ -13,13 +12,13 @@
         app:use_controller="false"
         app:resize_mode="fit" />
     
-    <!-- 顶部控制栏 -->
+    <!-- 顶部控制栏（半透明黑色） -->
     <LinearLayout
         android:id="@+id/top_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:background="#CC000000"
+        android:background="@drawable/control_bg"
         android:padding="10dp"
         android:gravity="center_vertical">
         
@@ -41,6 +40,7 @@
             android:layout_height="48dp"
             android:src="@android:drawable/ic_media_previous"
             android:background="?attr/selectableItemBackgroundBorderless"
+            android:tint="#FFFFFF"
             android:contentDescription="上一个" />
         
         <ImageButton
@@ -49,6 +49,7 @@
             android:layout_height="48dp"
             android:src="@android:drawable/ic_media_next"
             android:background="?attr/selectableItemBackgroundBorderless"
+            android:tint="#FFFFFF"
             android:contentDescription="下一个" />
         
         <ImageButton
@@ -57,15 +58,17 @@
             android:layout_height="48dp"
             android:src="@android:drawable/ic_menu_edit"
             android:background="?attr/selectableItemBackgroundBorderless"
+            android:tint="#FFFFFF"
             android:contentDescription="节目列表" />
             
     </LinearLayout>
     
-    <!-- 频道列表容器 -->
+    <!-- 频道列表容器（左侧滑动） -->
     <FrameLayout
         android:id="@+id/channel_list_container"
-        android:layout_width="300dp"
+        android:layout_width="280dp"
         android:layout_height="match_parent"
-        android:layout_gravity="start" />
+        android:layout_gravity="start"
+        android:translationZ="10dp" />
         
 </FrameLayout>
