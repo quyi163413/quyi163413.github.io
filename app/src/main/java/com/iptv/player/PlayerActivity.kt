@@ -51,16 +51,12 @@ class PlayerActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_player)
 
-        // 全屏设置
-        window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
-        window.decorView.systemUiVisibility = (
-            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-            or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-            or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-            or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-            or View.SYSTEM_UI_FLAG_FULLSCREEN
-            or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        // 全屏增强（兼容不同系统版本）
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_FULLSCREEN,
+            WindowManager.LayoutParams.FLAG_FULLSCREEN
         )
+        supportActionBar?.hide()
 
         try {
             initViews()
@@ -87,6 +83,21 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            // 沉浸式模式
+            window.decorView.systemUiVisibility = (
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+            )
+        }
+    }
+
     private fun initViews() {
         playerView = findViewById(R.id.player_view)
         topBar = findViewById(R.id.top_bar)
@@ -107,7 +118,6 @@ class PlayerActivity : AppCompatActivity() {
 
             exoPlayer?.addListener(object : Player.Listener {
                 override fun onPlaybackStateChanged(playbackState: Int) {
-                    Log.d(TAG, "Playback state: $playbackState")
                     when (playbackState) {
                         Player.STATE_READY -> {}
                         Player.STATE_ENDED -> nextChannel()
@@ -115,7 +125,6 @@ class PlayerActivity : AppCompatActivity() {
                 }
 
                 override fun onPlayerError(error: PlaybackException) {
-                    Log.e(TAG, "Player error", error)
                     Toast.makeText(this@PlayerActivity, "播放失败，尝试下一个", Toast.LENGTH_SHORT).show()
                     nextChannel()
                 }
@@ -156,38 +165,32 @@ class PlayerActivity : AppCompatActivity() {
 
     private fun setupTouchListener() {
         playerView.setOnTouchListener { _, event ->
-            try {
-                when (event.action) {
-                    MotionEvent.ACTION_DOWN -> {
-                        touchStartY = event.y
-                        true
-                    }
-                    MotionEvent.ACTION_UP -> {
-                        val diffY = touchStartY - event.y
-                        if (Math.abs(diffY) > SWIPE_THRESHOLD) {
-                            if (diffY > 0) previousChannel() else nextChannel()
-                            resetControlsHideTimer()
-                        }
-                        true
-                    }
-                    else -> false
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    touchStartY = event.y
+                    true
                 }
-            } catch (e: Exception) {
-                false
+                MotionEvent.ACTION_UP -> {
+                    val diffY = touchStartY - event.y
+                    if (Math.abs(diffY) > SWIPE_THRESHOLD) {
+                        if (diffY > 0) previousChannel() else nextChannel()
+                        resetControlsHideTimer()
+                    }
+                    true
+                }
+                else -> false
             }
         }
     }
 
     private fun playChannel(channel: Channel) {
         if (!isPlayerReady || exoPlayer == null) {
-            Log.e(TAG, "Player not ready")
             Toast.makeText(this, "播放器未就绪，请稍后", Toast.LENGTH_SHORT).show()
             return
         }
         try {
             currentChannel = channel
             channelNameText.text = channel.name
-            Log.i(TAG, "Playing: ${channel.name} - ${channel.url}")
 
             val mediaItem = MediaItem.Builder()
                 .setUri(channel.url)
@@ -201,7 +204,6 @@ class PlayerActivity : AppCompatActivity() {
 
             channelListFragment.updateSelectedPosition(currentPosition)
         } catch (e: Exception) {
-            Log.e(TAG, "playChannel error", e)
             Toast.makeText(this, "播放失败: ${e.message}", Toast.LENGTH_SHORT).show()
             nextChannel()
         }
