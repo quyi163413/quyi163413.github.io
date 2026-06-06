@@ -26,6 +26,7 @@ from src.demo_filter import filter_and_order_by_demo, write_shai_file
 from src.alias_matcher import get_alias_matcher
 from src.database import get_db_cache, channel_key
 from src.logger import logger
+from src.classifier import classify_channel  # 添加这一行用于调试打印
 
 async def init_ip_resolver():
     if not ENABLE_IP_RESOLVE:
@@ -141,6 +142,14 @@ async def main():
         before = len(merged_channels)
         ordered_channels, unmatched_channels = filter_and_order_by_demo(merged_channels)
         logger.info(f"📊 Demo筛选后: {len(ordered_channels)} (减少 {before - len(ordered_channels)})")
+        
+        # 调试：打印未匹配频道的前20个，帮助分析地方台缺失原因
+        if unmatched_channels:
+            logger.info("📝 未匹配频道示例（前20个，用于调试）：")
+            for idx, ch in enumerate(unmatched_channels[:20]):
+                cat = classify_channel(ch)
+                logger.info(f"  {idx+1}. {ch['name']} (分类: {cat})")
+        
         if unmatched_channels:
             write_shai_file(unmatched_channels, len(ordered_channels), before)
         if not ordered_channels:
