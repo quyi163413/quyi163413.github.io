@@ -2,29 +2,31 @@
 import asyncio
 import sys
 import os
-import json
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from src.config import (
-    IPTV_SOURCES, ENABLE_REGION_FILTER, PREFERRED_LOCATION, PREFERRED_ISP,
-    ENABLE_IP_RESOLVE, ENABLE_DEMO_FILTER, ENABLE_ALIAS, ENABLE_BLACKLIST,
-    DATABASE_ENABLE, CACHE_EXPIRY_SECONDS, DATABASE_TABLE
+    IPTV_SOURCES, OUTPUT_DIR, ENABLE_REGION_FILTER,
+    PREFERRED_LOCATION, PREFERRED_ISP, ENABLE_IP_RESOLVE,
+    ENABLE_DEMO_FILTER, ENABLE_ALIAS, ENABLE_BLACKLIST,
+    CCTV_ORDER
 )
-from src.fetcher import fetch_all_sources_incremental
+from src.fetcher import fetch_all_sources
 from src.parser import parse_and_dedupe
 from src.speed_tester import test_channels_concurrent
-from src.ffmpeg_validator import validate_batch, cleanup as ffmpeg_cleanup
-from src.generator import generate_outputs_from_demo
+from src.ffmpeg_validator import validate_with_ffmpeg_batch
+from src.classifier import classify_channel
+from src.generator import generate_outputs
 from src.merger import merge_channels_by_name
 from src.ip_resolver import get_resolver, matches_region
+from src.cache_manager import CacheManager
 from src.blacklist_filter import get_blacklist_filter
-from src.demo_filter import filter_and_order_by_demo, write_shai_file
+from src.demo_filter import filter_and_order_by_demo
 from src.alias_matcher import get_alias_matcher
-from src.database import get_db_cache, channel_key
 
-async def init_ip_resolver():
+ALLOWED_CATEGORIES = {"央视", "卫视", "地方", "港澳台"}
+
+def init_ip_resolver():
     if not ENABLE_IP_RESOLVE:
         print("⚙️ IP解析未启用")
         return
@@ -48,48 +50,101 @@ def filter_by_region(channels):
         return channels
     filtered = []
     for ch in channels:
-        ip_info = ch.get("ip_info")
+        ip_info = ch.get("ip_info") if isinstance(ch, dict) else getattr(ch, 'ip_info', None)
         if ip_info and matches_region(ip_info, preferred_locations, preferred_isps):
             filtered.append(ch)
     print(f"  筛选结果: {len(filtered)}/{len(channels)} 个频道通过地域筛选")
     return filtered
 
-async def save_to_cache(db, channels):
-    for ch in channels:
-        key = channel_key(ch["name"], ch["url"])
-        await db.set_speed_result(key, ch)
-    print(f"💾 已保存 {len(channels)} 个频道源到数据库缓存")
+def build_classified_from_ordered(ordered_channels, alias_matcher=None):
+    temp = {cat: [] for cat in ALLOWED_CATEGORIES}
+    for ch in ordered_channels:
+        orig_name = ch.name if hasattr(ch, 'name') else ch.get('name', '')
+        display_name = orig_name
+        if alias_matcher:
+            mapped = alias_matcher.match(orig_name)
+            if mapped:
+                display_name = mapped
+        # 临时修改名称用于分类
+        if alias_matcher and mapped:
+            if hasattr(ch, 'name'):
+                old = ch.name
+                ch.name = mapped
+                cat = classify_channel(ch)
+                ch.name = old
+            elif isinstance(ch, dict):
+                old = ch['name']
+                ch['name'] = mapped
+                cat = classify_channel(ch)
+                ch['name'] = old
+            else:
+                cat = classify_channel(ch)
+        else:
+            cat = classify_channel(ch)
+        if cat in ["🌊港·澳·台", "港澳台"]:
+            cat = "港澳台"
+        if cat not in ALLOWED_CATEGORIES:
+            continue
+        if isinstance(ch, dict):
+            ch_dict = ch
+        elif hasattr(ch, 'to_dict'):
+            ch_dict = ch.to_dict()
+        else:
+            ch_dict = {
+                "name": display_name,
+                "url": getattr(ch, 'url', ''),
+                "urls": getattr(ch, 'urls', [getattr(ch, 'url', '')]),
+                "group_title": getattr(ch, 'group_title', ''),
+                "id": getattr(ch, 'tvg_id', ''),
+                "logo": getattr(ch, 'tvg_logo', ''),
+                "latency": getattr(ch, 'latency', 9999),
+                "video_codec": getattr(ch, 'video_codec', ''),
+                "ip_info": getattr(ch, 'ip_info', None)
+            }
+        temp[cat].append(ch_dict)
+    # 央视排序
+    def ctv_key(ch):
+        name = ch["name"]
+        for idx, std in enumerate(CCTV_ORDER):
+            if std.lower() in name.lower() or name.lower() in std.lower():
+                return idx
+        return len(CCTV_ORDER)
+    if temp["央视"]:
+        temp["央视"] = sorted(temp["央视"], key=ctv_key)
+    result = {}
+    for cat in ["央视", "卫视", "地方", "港澳台"]:
+        if temp.get(cat):
+            result[cat] = temp[cat]
+        else:
+            result[cat] = []
+    print("📊 分类统计（强制顺序：央视、卫视、地方、港澳台）：")
+    for cat, lst in result.items():
+        if lst:
+            print(f"  {cat}: {len(lst)} 个频道")
+    return result
 
-async def load_merged_from_db(db) -> list:
-    """从数据库加载合并后的频道列表（直接返回合并结果）"""
-    if not db._conn:
-        return []
-    table = f"{DATABASE_TABLE}_speed"
-    cursor = await db._conn.execute(f"SELECT name, url, latency, video_codec, ip_info FROM {table}")
-    rows = await cursor.fetchall()
-    await cursor.close()
-    if not rows:
-        return []
-    valid_channels = []
-    for row in rows:
-        name, url, latency, video_codec, ip_info_json = row
-        ch = {
-            "name": name,
-            "url": url,
-            "latency": latency,
-            "video_codec": video_codec,
-            "ip_info": json.loads(ip_info_json) if ip_info_json else None
-        }
-        valid_channels.append(ch)
+async def full_update(alias_matcher):
+    """全量采集流程（首次运行或数据全部过期时）"""
+    print("\n📥 执行全量采集流程...")
+    raw_contents = await fetch_all_sources(IPTV_SOURCES)
+    channels_dict = parse_and_dedupe(raw_contents)
+    if not channels_dict:
+        print("❌ 未获取到任何频道，请检查网络或源地址")
+        return None
+    valid_channels = await test_channels_concurrent(channels_dict)
+    if not valid_channels:
+        print("❌ 无有效频道通过测速")
+        return None
+    valid_channels = await validate_with_ffmpeg_batch(valid_channels)
+    if not valid_channels:
+        print("❌ 深度验证后无有效频道")
+        return None
     merged = merge_channels_by_name(valid_channels)
-        # 调试：检查 CCTV-1 和 CCTV-17 的 URL
-    cctv1 = [ch for ch in merged_channels if ch["name"] == "CCTV-1"]
-    cctv17 = [ch for ch in merged_channels if ch["name"] == "CCTV-17"]
-    if cctv1:
-        print(f"🔍 DEBUG: CCTV-1 URL: {cctv1[0]['url']}")
-    if cctv17:
-        print(f"🔍 DEBUG: CCTV-17 URL: {cctv17[0]['url']}")
-    print(f"📂 从数据库加载并合并，得到 {len(merged)} 个频道")
+    if ENABLE_BLACKLIST:
+        merged = get_blacklist_filter().filter_channels(merged)
+    if ENABLE_DEMO_FILTER:
+        merged = filter_and_order_by_demo(merged, alias_matcher=alias_matcher)
+    merged = filter_by_region(merged)
     return merged
 
 async def main():
@@ -97,86 +152,67 @@ async def main():
     print(f"📡 配置：超时={os.getenv('TIMEOUT','10')}s, 并发={os.getenv('MAX_WORKERS','10')}, ffmpeg={os.getenv('FFMPEG_ENABLE','true')}")
     print(f"📋 增强过滤: demo={ENABLE_DEMO_FILTER}, alias={ENABLE_ALIAS}, blacklist={ENABLE_BLACKLIST}")
 
-    await init_ip_resolver()
+    init_ip_resolver()
     if os.getenv("FFMPEG_ENABLE", "true").lower() == "true":
         from src.ffmpeg_validator import check_ffprobe
         await check_ffprobe()
 
-    db = await get_db_cache()
+    cache = CacheManager()
+    alias_matcher = get_alias_matcher() if ENABLE_ALIAS else None
 
-    # 增量拉取（HEAD检测+缓存）
-    print("\n📥 执行增量源检测和拉取...")
-    raw_contents = await fetch_all_sources_incremental(IPTV_SOURCES, db)
-    
-    # 解析所有拉取到的内容
-    channels_dict = parse_and_dedupe(raw_contents)
-    if not channels_dict:
-        print("❌ 未获取到任何频道，尝试使用数据库缓存")
-        merged_channels = await load_merged_from_db(db)
-        if not merged_channels:
-            print("❌ 无任何频道数据，退出")
+    if cache.should_full_update():
+        final_channels = await full_update(alias_matcher)
+        if not final_channels:
             return 1
+        cache.save_to_cache(final_channels, verified=True)
     else:
-        print(f"📊 原始频道数（去重后）: {len(channels_dict)}")
+        print("\n📦 使用缓存数据（增量模式）...")
+        cached = cache.load_active_channels()
+        if not cached:
+            print("⚠️ 缓存无有效数据，执行全量采集...")
+            final_channels = await full_update(alias_matcher)
+            if not final_channels:
+                return 1
+            cache.save_to_cache(final_channels, verified=True)
+        else:
+            # 这里可以增加增量验证逻辑（仅验证过期的频道），为简化直接使用缓存
+            # 注意：如果希望定期验证，可以在后续版本实现
+            final_channels = cached
+            # 将缓存记录转换为与 full_update 相同格式（合并多源）
+            class SimpleChannel:
+                def __init__(self, data):
+                    self.name = data['name']
+                    self.url = data['url']
+                    self.latency = data.get('latency', 9999)
+                    self.video_codec = data.get('video_codec', '')
+                    self.group_title = data.get('group_title', '')
+                    self.tvg_id = data.get('id', '')
+                    self.tvg_logo = data.get('logo', '')
+                    self.ip_info = data.get('ip_info')
+            simple = [SimpleChannel(rec) for rec in cached]
+            merged = merge_channels_by_name(simple)
+            if ENABLE_BLACKLIST:
+                merged = get_blacklist_filter().filter_channels(merged)
+            if ENABLE_DEMO_FILTER:
+                final_channels = filter_and_order_by_demo(merged, alias_matcher=alias_matcher)
+            else:
+                final_channels = merged
 
-        # 测速（内部有缓存）
-        valid_channels = await test_channels_concurrent(channels_dict)
-        print(f"📊 通过HTTP测速的频道数: {len(valid_channels)}")
+    classified = build_classified_from_ordered(final_channels, alias_matcher=alias_matcher)
+    generate_outputs(classified)
 
-        # 深度验证（内部有缓存）
-        valid_channels = await validate_batch(valid_channels)
-        print(f"📊 通过ffmpeg深度验证的频道数: {len(valid_channels)}")
-
-        # 保存到数据库缓存
-        if DATABASE_ENABLE and valid_channels:
-            await save_to_cache(db, valid_channels)
-            await db.set_last_update_time()
-
-        # 合并
-        merged_channels = merge_channels_by_name(valid_channels)
-        print(f"📊 合并后的频道数: {len(merged_channels)}")
-
-    # 后续统一过滤
-    if ENABLE_BLACKLIST:
-        blacklist_filter = get_blacklist_filter()
-        before = len(merged_channels)
-        merged_channels = blacklist_filter.filter_channels(merged_channels)
-        print(f"📊 黑名单过滤后: {len(merged_channels)} (减少 {before - len(merged_channels)})")
-
-    if ENABLE_DEMO_FILTER:
-        before = len(merged_channels)
-        ordered_channels, unmatched_channels = filter_and_order_by_demo(merged_channels)
-        print(f"📊 Demo筛选后: {len(ordered_channels)} (减少 {before - len(ordered_channels)})")
-        if unmatched_channels:
-            write_shai_file(unmatched_channels, len(ordered_channels), before)
-        if not ordered_channels:
-            print("❌ Demo 筛选后无频道，尝试不筛选")
-            ordered_channels = merged_channels
-    else:
-        ordered_channels = merged_channels
-
-    ordered_channels = filter_by_region(ordered_channels)
-    if not ordered_channels:
-        print("❌ 过滤后无有效频道")
-        return 1
-
-    generate_outputs_from_demo(ordered_channels)
-
-    total = len(ordered_channels)
+    total = sum(len(lst) for lst in classified.values())
     print(f"🎉 完成！有效频道总数: {total}")
-    ffmpeg_cleanup()
-    await db.close()
-    return 0
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(0)
 
 if __name__ == "__main__":
     try:
-        exit_code = asyncio.run(main())
-        sys.exit(exit_code)
+        asyncio.run(main())
     except KeyboardInterrupt:
         print("\n⚠️ 用户中断")
         sys.exit(1)
     except Exception as e:
         print(f"\n❌ 发生错误: {e}")
-        import traceback
-        traceback.print_exc()
         sys.exit(1)
