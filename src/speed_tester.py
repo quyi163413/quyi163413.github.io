@@ -1,15 +1,18 @@
 # src/speed_tester.py
 # 轻量级 HTTP 头探测，要求 Content-Type 包含 video
+# 增加 tqdm 进度条
 
 import asyncio
 import aiohttp
 import time
+from tqdm.asyncio import tqdm
 from src.config import HEADERS, TIMEOUT, MAX_WORKERS, ENABLE_IP_RESOLVE
 from src.ip_resolver import get_resolver
 from src.database import get_db_cache, channel_key
 from src.logger import logger
 
 async def probe_channel(session: aiohttp.ClientSession, channel: dict) -> tuple:
+    """异步探测单个频道，返回 (channel_dict, latency, success, ip_info)"""
     url = channel["url"]
     try:
         start = time.time()
@@ -31,9 +34,11 @@ async def probe_channel(session: aiohttp.ClientSession, channel: dict) -> tuple:
         return channel, 0, False, None
 
 async def test_channels_concurrent(channels_dict: dict) -> list:
+    """并发测速，返回有效的频道列表（按延迟排序），使用数据库缓存，带进度条"""
     channels = list(channels_dict.values())
     db = await get_db_cache()
     
+    # 先尝试从缓存读取结果
     cached_results = []
     to_probe = []
     for ch in channels:
@@ -60,7 +65,11 @@ async def test_channels_concurrent(channels_dict: dict) -> list:
         timeout_config = aiohttp.ClientTimeout(total=TIMEOUT + 5)
         async with aiohttp.ClientSession(connector=connector, timeout=timeout_config) as session:
             tasks = [bounded_probe(session, ch) for ch in to_probe]
-            results = await asyncio.gather(*tasks, return_exceptions=True)
+            # 使用 tqdm 进度条包装
+            results = []
+            for coro in tqdm.as_completed(tasks, desc="🚀 测速进度", unit="频道", total=len(tasks), leave=True):
+                res = await coro
+                results.append(res)
         
         for res in results:
             if isinstance(res, Exception):
