@@ -1,14 +1,12 @@
 # src/ffmpeg_validator.py
-# ffmpeg/ffprobe 深度验证模块，必须包含视频流才有效
-
 import asyncio
 import subprocess
 import json
 from concurrent.futures import ThreadPoolExecutor
 from src.config import FFMPEG_ENABLE, TIMEOUT, MAX_WORKERS, FFMPEG_STRICT
-from src.database import get_db_cache, channel_key
 
 _thread_pool = None
+_ffprobe_available = None
 
 def get_thread_pool():
     global _thread_pool
@@ -18,38 +16,58 @@ def get_thread_pool():
 
 def check_ffprobe_sync():
     try:
-        result = subprocess.run(["ffprobe", "-version"], capture_output=True, timeout=5, text=True)
+        result = subprocess.run(["ffprobe", "-version"], capture_output=True, timeout=5)
         return result.returncode == 0
-    except Exception:
+    except:
         return False
 
 async def check_ffprobe():
+    global _ffprobe_available
+    if _ffprobe_available is not None:
+        return _ffprobe_available
     loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(get_thread_pool(), check_ffprobe_sync)
+    _ffprobe_available = await loop.run_in_executor(get_thread_pool(), check_ffprobe_sync)
+    if _ffprobe_available:
+        print("✅ ffprobe 可用（深度验证已启用）")
+    else:
+        print("⚠️ ffprobe 不可用，将跳过深度验证")
+    return _ffprobe_available
 
-def validate_with_ffprobe_sync(url: str, timeout: int) -> dict:
+def validate_sync(url: str, timeout: int) -> dict:
     cmd = [
         "ffprobe", "-v", "quiet", "-print_format", "json", "-show_streams",
-        "-analyzeduration", "5000000", "-probesize", "5000000", url
+        "-analyzeduration", "5000000", "-probesize", "5000000",
+        url
     ]
     try:
         result = subprocess.run(cmd, capture_output=True, timeout=timeout, text=True)
         if result.returncode != 0:
-            return {"valid": False, "has_video": False, "video_codec": ""}
+            return {"valid": not FFMPEG_STRICT, "has_video": False, "video_codec": "", "has_audio": False}
         data = json.loads(result.stdout)
         streams = data.get("streams", [])
-        has_video = False
-        video_codec = ""
-        for s in streams:
-            if s.get("codec_type") == "video":
-                has_video = True
-                video_codec = s.get("codec_name", "").lower()
-                break
-        # 必须有视频流才算有效
-        valid = has_video
-        return {"valid": valid, "has_video": has_video, "video_codec": video_codec}
+        has_video = any(s.get("codec_type") == "video" for s in streams)
+        video_codec = next((s.get("codec_name", "").lower() for s in streams if s.get("codec_type") == "video"), "")
+        has_audio = any(s.get("codec_type") == "audio" for s in streams)
+        valid = has_video or has_audio
+        if not valid and not FFMPEG_STRICT:
+            valid = True
+        return {"valid": valid, "has_video": has_video, "video_codec": video_codec, "has_audio": has_audio}
     except Exception:
-        return {"valid": False, "has_video": False, "video_codec": ""}
+        return {"valid": not FFMPEG_STRICT, "has_video": False, "video_codec": "", "has_audio": False}
+
+async def validate_with_ffprobe(channel):
+    if not FFMPEG_ENABLE:
+        return {"valid": True, "has_video": True, "video_codec": "unknown", "has_audio": True}
+    if not await check_ffprobe():
+        return {"valid": True, "has_video": True, "video_codec": "unknown", "has_audio": True}
+    loop = asyncio.get_event_loop()
+    try:
+        result = await loop.run_in_executor(get_thread_pool(), validate_sync, channel.url, TIMEOUT)
+        if hasattr(channel, 'video_codec'):
+            channel.video_codec = result.get("video_codec", "")
+        return result
+    except Exception:
+        return {"valid": not FFMPEG_STRICT, "has_video": False, "video_codec": "", "has_audio": False}
 
 async def validate_batch(channels: list) -> list:
     if not FFMPEG_ENABLE:
@@ -58,41 +76,26 @@ async def validate_batch(channels: list) -> list:
     if not await check_ffprobe():
         print("⚠️ ffprobe 不可用，跳过深度验证，全部频道视为有效")
         return channels
+    semaphore = asyncio.Semaphore(min(MAX_WORKERS, 3))
+    async def validate_one(ch):
+        async with semaphore:
+            result = await validate_with_ffprobe(ch)
+            return ch, result.get("valid", True)
+    tasks = [validate_one(ch) for ch in channels]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    valid = []
+    for res in results:
+        if isinstance(res, Exception):
+            continue
+        ch, ok = res
+        if ok:
+            valid.append(ch)
+    print(f"🔍 ffmpeg 深度验证完成，通过 {len(valid)}/{len(channels)} 个频道")
+    return valid
 
-    db = await get_db_cache()
-    need_validate = []
-    valid_channels = []
-    for ch in channels:
-        key = channel_key(ch["name"], ch["url"])
-        cached = await db.get_speed_result(key, max_age_hours=24*7)
-        if cached and cached.get("video_codec"):
-            ch["video_codec"] = cached["video_codec"]
-            valid_channels.append(ch)
-        else:
-            need_validate.append(ch)
-
-    print(f"🔍 ffmpeg 深度验证: {len(need_validate)} 个需要验证，{len(valid_channels)} 个来自缓存")
-    
-    if need_validate:
-        semaphore = asyncio.Semaphore(3)
-        async def validate_one(ch):
-            async with semaphore:
-                result = await asyncio.get_event_loop().run_in_executor(
-                    get_thread_pool(), validate_with_ffprobe_sync, ch["url"], TIMEOUT
-                )
-                if result.get("valid"):
-                    ch["video_codec"] = result.get("video_codec", "")
-                    key = channel_key(ch["name"], ch["url"])
-                    await db.set_speed_result(key, ch)
-                    return ch
-                return None
-        tasks = [validate_one(ch) for ch in need_validate]
-        results = await asyncio.gather(*tasks)
-        valid_need = [r for r in results if r is not None]
-        valid_channels.extend(valid_need)
-    
-    print(f"🔍 ffmpeg 深度验证完成，通过 {len(valid_channels)}/{len(channels)} 个频道")
-    return valid_channels
+async def validate_with_ffmpeg_batch(channels: list) -> list:
+    """对外统一入口"""
+    return await validate_batch(channels)
 
 def cleanup():
     global _thread_pool
