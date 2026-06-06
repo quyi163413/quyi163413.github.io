@@ -5,8 +5,8 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 from src.config import FFMPEG_ENABLE, TIMEOUT, MAX_WORKERS, FFMPEG_STRICT
 
-_thread_pool = None
 _ffprobe_available = None
+_thread_pool = None
 
 def get_thread_pool():
     global _thread_pool
@@ -33,12 +33,9 @@ async def check_ffprobe():
         print("⚠️ ffprobe 不可用，将跳过深度验证")
     return _ffprobe_available
 
-def validate_sync(url: str, timeout: int) -> dict:
-    cmd = [
-        "ffprobe", "-v", "quiet", "-print_format", "json", "-show_streams",
-        "-analyzeduration", "5000000", "-probesize", "5000000",
-        url
-    ]
+def validate_with_ffprobe_sync(url: str, timeout: int):
+    cmd = ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_streams",
+           "-analyzeduration", "5000000", "-probesize", "5000000", url]
     try:
         result = subprocess.run(cmd, capture_output=True, timeout=timeout, text=True)
         if result.returncode != 0:
@@ -52,7 +49,7 @@ def validate_sync(url: str, timeout: int) -> dict:
         if not valid and not FFMPEG_STRICT:
             valid = True
         return {"valid": valid, "has_video": has_video, "video_codec": video_codec, "has_audio": has_audio}
-    except Exception:
+    except:
         return {"valid": not FFMPEG_STRICT, "has_video": False, "video_codec": "", "has_audio": False}
 
 async def validate_with_ffprobe(channel):
@@ -61,13 +58,10 @@ async def validate_with_ffprobe(channel):
     if not await check_ffprobe():
         return {"valid": True, "has_video": True, "video_codec": "unknown", "has_audio": True}
     loop = asyncio.get_event_loop()
-    try:
-        result = await loop.run_in_executor(get_thread_pool(), validate_sync, channel.url, TIMEOUT)
-        if hasattr(channel, 'video_codec'):
-            channel.video_codec = result.get("video_codec", "")
-        return result
-    except Exception:
-        return {"valid": not FFMPEG_STRICT, "has_video": False, "video_codec": "", "has_audio": False}
+    result = await loop.run_in_executor(get_thread_pool(), validate_with_ffprobe_sync, channel.url, TIMEOUT)
+    if hasattr(channel, 'video_codec'):
+        channel.video_codec = result.get("video_codec", "")
+    return result
 
 async def validate_batch(channels: list) -> list:
     if not FFMPEG_ENABLE:
@@ -83,22 +77,9 @@ async def validate_batch(channels: list) -> list:
             return ch, result.get("valid", True)
     tasks = [validate_one(ch) for ch in channels]
     results = await asyncio.gather(*tasks, return_exceptions=True)
-    valid = []
-    for res in results:
-        if isinstance(res, Exception):
-            continue
-        ch, ok = res
-        if ok:
-            valid.append(ch)
+    valid = [ch for item in results if not isinstance(item, Exception) and item[1] for ch, ok in [item] if ok]
     print(f"🔍 ffmpeg 深度验证完成，通过 {len(valid)}/{len(channels)} 个频道")
     return valid
 
 async def validate_with_ffmpeg_batch(channels: list) -> list:
-    """对外统一入口"""
     return await validate_batch(channels)
-
-def cleanup():
-    global _thread_pool
-    if _thread_pool:
-        _thread_pool.shutdown(wait=False)
-        _thread_pool = None
