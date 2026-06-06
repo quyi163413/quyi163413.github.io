@@ -173,3 +173,23 @@ class IPTVDatabase:
             cursor.execute("SELECT COUNT(*) FROM channels WHERE status = 'active'")
             active = cursor.fetchone()[0]
         return active == 0 or recent == 0
+
+def get_last_full_update_time(self) -> Optional[int]:
+    """获取上次全量采集的时间戳"""
+    with sqlite3.connect(self.db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT value FROM metadata WHERE key = 'last_full_update'")
+        row = cursor.fetchone()
+        if row:
+            return int(row[0])
+    return None
+
+def set_last_full_update_time(self, timestamp: int = None):
+    """设置全量采集时间戳"""
+    if timestamp is None:
+        timestamp = int(time.time())
+    with sqlite3.connect(self.db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute("INSERT OR REPLACE INTO metadata (key, value) VALUES (?, ?)",
+                       ("last_full_update", str(timestamp)))
+        conn.commit()
