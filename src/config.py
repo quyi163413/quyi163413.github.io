@@ -75,3 +75,8 @@ ENABLE_ALIAS = os.getenv("ENABLE_ALIAS", "true").lower() == "true"
 ENABLE_BLACKLIST = os.getenv("ENABLE_BLACKLIST", "true").lower() == "true"
 
 DEMO_MATCH_MODE = os.getenv("DEMO_MATCH_MODE", "contains")
+
+# ==================== HTTP 服务配置 ====================
+ENABLE_WEB_SERVER = os.getenv("ENABLE_WEB_SERVER", "true").lower() == "true"
+WEB_SERVER_PORT = int(os.getenv("WEB_SERVER_PORT", 8000))
+WEB_SERVER_HOST = os.getenv("WEB_SERVER_HOST", "0.0.0.0")
