@@ -4,7 +4,7 @@ services:
     container_name: iptv-collector
     restart: unless-stopped
     ports:
-      - "8000:8000"                 # 映射 HTTP 服务端口
+      - "8080:8080"   # 映射主机 8080 端口到容器 8080
     volumes:
       - ./data:/app/data
       - ./output:/app/output
@@ -24,5 +24,8 @@ services:
       - DEMO_MATCH_MODE=contains
       - RUN_MODE=schedule
       - SCHEDULE_INTERVAL=21600
-      - WEB_SERVER_PORT=8000
-      - WEB_SERVER_HOST=0.0.0.0
+    # 如果需要限制内存可取消注释
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 2G
