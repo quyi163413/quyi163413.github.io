@@ -84,6 +84,5 @@ OUTPUT_DIR = ROOT_DIR / "output"   # 容器内为 /app/output
 # ==================== CDN 加速配置 ====================
 CDN_PROXY_ENABLE = os.getenv("CDN_PROXY_ENABLE", "true").lower() == "true"
 CDN_PROXY_URL = os.getenv("CDN_PROXY_URL", "https://gh-proxy.19860519.xyz/")
-# 需要加速的域名列表，支持逗号分隔
 CDN_PROXY_DOMAINS_RAW = os.getenv("CDN_PROXY_DOMAINS", "raw.githubusercontent.com,github.com")
 CDN_PROXY_DOMAINS = [d.strip() for d in CDN_PROXY_DOMAINS_RAW.split(",") if d.strip()]
