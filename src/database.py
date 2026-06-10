@@ -1,6 +1,4 @@
 # src/database.py
-# 简化版 SQLite 数据库缓存
-
 import json
 import aiosqlite
 from datetime import datetime, timedelta
@@ -132,6 +130,7 @@ class DatabaseCache:
             pass
     
     async def save_speed_results(self, channels: List[Dict]):
+        """批量保存测速结果"""
         for ch in channels:
             key = f"{ch['name']}|{ch['url']}"
             await self.set_speed_result(key, ch)
