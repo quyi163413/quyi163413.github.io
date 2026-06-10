@@ -1,7 +1,7 @@
 # Demo筛选丢弃的频道
-# 原始频道总数: 514
-# Demo匹配成功: 395
-# 丢弃数量: 119
+# 原始频道总数: 515
+# Demo匹配成功: 398
+# 丢弃数量: 117
 # 格式: 频道名,URL
 
 1988年春晚,https://txmov2.a.kwimgs.com/bs3/video-hls/5216575810935394655_hlsb.m3u8
@@ -15,7 +15,6 @@ CH5,https://cdn6.163189.xyz/163189/ch5
 亚洲武侠,http://php.jdshipin.com/TVOD/iptv.php?id=yzwx
 Newsmax,http://nmxlive.akamaized.net/hls/live/529965/Live_1/index.m3u8
 Astro AOD,http://php.jdshipin.com/TVOD/iptv.php?id=aod
-CCTV-5+,http://112.27.235.94:8000/hls/6/index.m3u8
 VOA美国之音,https://voa-ingest.akamaized.net/hls/live/2033878/tvmc08/playlist.m3u8
 春晚2025,https://res.cctvnews.cctv.com/video/3005/record/cctv/merge1/133396667284143308839013005/8fbd6180bdef4da19f6155cf6b4652e1-4.m3u8
 萧山综合,http://l.cztvcloud.com/channels/lantian/SXxiaoshan1/720p.m3u8
@@ -73,7 +72,6 @@ WionNews,https://d7x8z4yuq42qn.cloudfront.net/index_7.m3u8
 倩女幽魂道道道,http://jsmov2.a.yximgs.com/bs3/video-hls/5216294367991385255_hlsb.m3u8
 Pet Club TV,https://cdn-apse1-prod.tsv2.amagi.tv/linear/amg01076-lightningintern-petclub-samsungnz/playlist.m3u8
 上虞經濟文化 [Not 24/7],https://l.cztvcloud.com/channels/lantian/SXshangyu2/720p.m3u8
-CCTV真,http://vip1.xinketongxun.fun:8082/tsfile/live/1026_1.m3u8
 新昌新聞綜合 [Not 24/7],https://l.cztvcloud.com/channels/lantian/SXxinchang1/720p.m3u8
 RT Arabic,https://rt-arb.rttv.com/dvr/rtarab/playlist_4500Kb.m3u8
 Beautiful Life TV,https://5ddce30eb4b55.streamlock.net/bltvhd/bltv1/playlist.m3u8
