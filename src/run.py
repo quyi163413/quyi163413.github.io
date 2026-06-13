@@ -21,6 +21,10 @@ from src.config import (
     MAX_WORKERS,
     TIMEOUT,
     FFMPEG_ENABLE,
+    ENABLE_GLOBAL_CHANNELS,
+    ENABLE_JSON_OUTPUT,
+    ENABLE_LITE_VERSION,
+    ENABLE_EPG_OUTPUT,
 )
 from src.fetcher import fetch_all_sources_incremental
 from src.parser import parse_and_dedupe
@@ -37,6 +41,11 @@ from src.demo_filter import (
 from src.database import get_db_cache
 from src.logger import logger
 
+# 新增导入
+from src.iptv_org_adapter import get_iptv_org_adapter
+from src.global_channels import get_global_selector
+from src.generator_enhanced import EnhancedOutputGenerator
+
 
 async def main():
     logger.info("🚀 IPTV 智能整理平台启动")
@@ -44,6 +53,13 @@ async def main():
     logger.info(
         f"📋 增强过滤: demo={ENABLE_DEMO_FILTER}, alias={ENABLE_ALIAS}, blacklist={ENABLE_BLACKLIST}"
     )
+    
+    # 新增：打印 iptv-org 状态
+    from src.config import IPTV_ORG_ENABLE
+    if IPTV_ORG_ENABLE:
+        logger.info("🌍 iptv-org 融合模式已启用")
+        if ENABLE_GLOBAL_CHANNELS:
+            logger.info("🌍 全球频道扩展已启用")
 
     # 获取 demo 顺序（用于输出排序）
     demo_order = parse_demo_order_with_categories() if ENABLE_DEMO_FILTER else []
@@ -108,14 +124,32 @@ async def main():
         logger.error("❌ 过滤后无有效频道")
         return 1
 
+    # ========== 新增：全球频道扩展 ==========
+    if ENABLE_GLOBAL_CHANNELS:
+        logger.info("🌍 正在合并全球频道...")
+        global_selector = get_global_selector()
+        ordered_channels = await global_selector.merge_with_domestic(ordered_channels)
+
     # 最终分类统计
     cat_counter = Counter(ch.get("demo_category", "其他") for ch in ordered_channels)
     logger.info("\n🎉 最终有效频道分类统计：")
     for cat, cnt in cat_counter.items():
         logger.info(f"  {cat}: {cnt} 个频道")
 
-    # 生成输出文件（M3U/TXT，并保持 demo.txt 顺序）
+    # ========== 修改：使用增强版输出生成器 ==========
+    output_gen = EnhancedOutputGenerator()
+    
+    # 生成标准输出（保持原有兼容性）
     generate_outputs_from_demo(ordered_channels, demo_order)
+    
+    # 生成增强版输出（新增功能）
+    output_gen.generate_all_outputs(
+        ordered_channels, 
+        demo_order,
+        enable_json=ENABLE_JSON_OUTPUT,
+        enable_lite=ENABLE_LITE_VERSION,
+        enable_epg=ENABLE_EPG_OUTPUT
+    )
 
     total = len(ordered_channels)
     logger.info(f"🎉 完成！有效频道总数: {total}")
@@ -125,6 +159,11 @@ async def main():
         "total_channels": total,
         "timestamp": datetime.datetime.now().isoformat(),
         "category_stats": dict(cat_counter),
+        "features": {
+            "iptv_org_enabled": IPTV_ORG_ENABLE,
+            "global_channels_enabled": ENABLE_GLOBAL_CHANNELS,
+            "epg_injection_enabled": ENABLE_EPG_OUTPUT
+        }
     }
     stats_path = OUTPUT_DIR / "stats.json"
     with open(stats_path, "w", encoding="utf-8") as f:
