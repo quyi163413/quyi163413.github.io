@@ -1,10 +1,10 @@
-# src/speed_tester.py - 简化版，只保留核心测速逻辑
+# src/speed_tester.py - 简化版，适用于 GitHub Actions 环境
 
 import asyncio
 import aiohttp
 import time
 import re
-from tqdm.asyncio import tqdm
+import sys
 from src.config import HEADERS, TIMEOUT, MAX_WORKERS
 from src.database import get_db_cache, channel_key
 from src.logger import logger
@@ -150,8 +150,23 @@ async def test_channels_concurrent(channels_dict: dict) -> list:
         async with aiohttp.ClientSession(connector=connector, timeout=timeout_config) as session:
             tasks = [bounded_probe(session, ch) for ch in to_probe]
             
-            for coro in tqdm.as_completed(tasks, desc="🔍 测速", unit="频道", total=len(tasks)):
+            # 简单的进度输出，不刷新行
+            total = len(tasks)
+            completed = 0
+            last_log = 0
+            start_time = time.time()
+            
+            for coro in asyncio.as_completed(tasks):
                 ch, latency, ok, speed = await coro
+                completed += 1
+                
+                # 每完成 50 个或每 5 秒输出一次进度
+                now = time.time()
+                if completed - last_log >= 50 or (now - start_time) / 60 >= 1:
+                    percent = completed * 100 // total
+                    logger.info(f"  📡 测速进度: {completed}/{total} ({percent}%) - 有效: {len(valid)}")
+                    last_log = completed
+                
                 if ok:
                     ch["latency"] = latency
                     ch["speed"] = speed
