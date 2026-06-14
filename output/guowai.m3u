@@ -1,6 +1,6 @@
 #EXTM3U
 # 国外频道合集 (Overseas Channels)
-# 共 5142 个频道
+# 共 5154 个频道
 # 按国家/地区分类，频道名 A-Z 排序
 
 
@@ -104,7 +104,7 @@ https://rusbrics.mediacdn.ru/cdn/brics/russian/playlist.m3u8
 #EXTINF:-1 group-title="俄罗斯",VIVA Russia
 https://live20.bozztv.com/akamaissh101/ssh101/vivarussia/chunks.m3u8
 
-# ========== 其他地区 (4508个频道) ==========
+# ========== 其他地区 (4517个频道) ==========
 #EXTINF:-1 group-title="其他地区",10 Bold Adelaide
 https://dce3793146fef017.mediapackage.us-west-2.amazonaws.com/out/v1/55cdf73af7894775ba6de8f57482b66a/CMAF_HLS/index.m3u8
 #EXTINF:-1 group-title="其他地区",10 TV
@@ -207,6 +207,8 @@ https://directes-tv-int.3catdirectes.cat/live-content/beauties-hls/master.m3u8
 https://fast-tailor.3catdirectes.cat/v1/channel/bunquer/hls.m3u8
 #EXTINF:-1 group-title="其他地区",3Cat Plats bruts
 https://fast-tailor.3catdirectes.cat/v1/channel/ccma-channel2/hls.m3u8
+#EXTINF:-1 group-title="其他地区",3CatInfo
+https://directes-tv-int.3catdirectes.cat/live-origin/canal324-hls/master.m3u8
 #EXTINF:-1 group-title="其他地区",4 Fun Kids [[Not 24/7]]
 https://stream.4fun.tv:8889/hls/4fk_high/index.m3u8
 #EXTINF:-1 group-title="其他地区",4 Kurd
@@ -1155,6 +1157,8 @@ https://bloomberg.com/media-manifest/streams/asia.m3u8
 https://bloomberg.com/media-manifest/streams/asia-event.m3u8
 #EXTINF:-1 group-title="其他地区",Bloomberg TV EMEA Live Event
 https://bloomberg.com/media-manifest/streams/eu-event.m3u8
+#EXTINF:-1 group-title="其他地区",Blu Radio
+https://mdstrm.com/live-stream-playlist/58d1921a72e2b22e2905e493.m3u8
 #EXTINF:-1 group-title="其他地区",Blue Sky TV
 https://cdn5.smart-tv-data.com/bluesky/bluesky-live/playlist.m3u8
 #EXTINF:-1 group-title="其他地区",Blues TV
@@ -1369,6 +1373,8 @@ https://stream.hostuis.com:19360/canatvdigital/canatvdigital.m3u8
 https://5caf24a595d94.streamlock.net:1937/pvyugfkzkc/pvyugfkzkc/playlist.m3u8
 #EXTINF:-1 group-title="其他地区",Canal 1 [Not 24/7]
 https://vid.canal1cr.com:3424/multi_live/play_720.m3u8
+#EXTINF:-1 group-title="其他地区",Canal 10
+https://5ca3e84a76d30.streamlock.net/tves/videotves/playlist.m3u8
 #EXTINF:-1 group-title="其他地区",Canal 10 [Not 24/7]
 https://acceso.mediosdecostarica.com:3606/hybrid/play.m3u8
 #EXTINF:-1 group-title="其他地区",Canal 10 Chiapas
@@ -1383,6 +1389,8 @@ https://ventdelnord.tv:8080/escala/directe.m3u8
 https://redirector.rudo.video/hls-video/c54ac2799874375c81c1672abb700870537c5223/canal11hn/canal11hn.smil/playlist.m3u8
 #EXTINF:-1 group-title="其他地区",Canal 11 TuTV
 https://stream.giostreaming.app/canal11/canal11.m3u8
+#EXTINF:-1 group-title="其他地区",Canal 13 Esquipulas
+https://tv91.hostingnuclear.com:19360/intercable/intercable.m3u8
 #EXTINF:-1 group-title="其他地区",Canal 13 Jujuy TV
 https://genexservicios.com:19360/canal13jujuy/canal13jujuy.m3u8
 #EXTINF:-1 group-title="其他地区",Canal 13 La Rioja
@@ -6325,6 +6333,8 @@ https://video1.getstreamhosting.com:1936/8330/8330/playlist.m3u8
 https://d3mznj2vub522l.cloudfront.net/playlist.m3u8
 #EXTINF:-1 group-title="其他地区",Series K Heart
 https://d28efmnqar6ea8.cloudfront.net/playlist.m3u8
+#EXTINF:-1 group-title="其他地区",Series K Legacy
+https://d2uvezlpjwbhrx.cloudfront.net/playlist.m3u8
 #EXTINF:-1 group-title="其他地区",SET Televisión Canal 26.1 [Not 24/7]
 https://5d0d1d7a6be9e.streamlock.net/sicom/canal1/playlist.m3u8
 #EXTINF:-1 group-title="其他地区",SET Televisión Canal 26.2 [Not 24/7]
@@ -8007,6 +8017,8 @@ https://live-hq.evgcdn.net/live/2851dc2c9af68834814a89e61db0faee561/chunklist.m3
 https://edge20.vedge.infomaniak.com/livecast/ik:33dm06/manifest.m3u8
 #EXTINF:-1 group-title="其他地区",TürkHaber
 https://edge1.socialsmart.tv/turkhaber/bant1/playlist.m3u8
+#EXTINF:-1 group-title="其他地区",U (720p)
+https://bl.rutube.ru/livestream/5c9327074e25ca86f3111d4085cbbb65/index.m3u8?e=2066519758&s=9cPc1rCGu6M932eqrifRhQ&scheme=https
 #EXTINF:-1 group-title="其他地区",U Los Lagos TV [Not 24/7]
 http://tv.ulagos.cl/web/live.m3u8
 #EXTINF:-1 group-title="其他地区",U&Laughs [Geo-blocked]
@@ -8229,6 +8241,8 @@ http://k4.usastreams.com/videotour/videotour/playlist.m3u8
 https://straume.vdtv.lv/vdtv2/index.m3u8
 #EXTINF:-1 group-title="其他地区",Vijay Super
 http://202.70.146.135:8000/play/a008/index.m3u8
+#EXTINF:-1 group-title="其他地区",viju TV1000 Русское
+http://31.148.48.15/TV1000_Russkoe_kino/index.m3u8
 #EXTINF:-1 group-title="其他地区",Villa Altagracia TV [Not 24/7]
 https://stream.inliveserver.com:19360/8004/8004.m3u8
 #EXTINF:-1 group-title="其他地区",Villa Elisa Radio TV
@@ -8701,6 +8715,8 @@ http://118.107.85.4:1935/live/smil:DNTV1.smil/chunklist.m3u8
 http://118.107.85.4:1935/live/smil:DNTV2.smil/chunklist.m3u8
 #EXTINF:-1 group-title="其他地区",АБАЗА-ТВ
 https://public.apsny.camera/tv_abaza_tv_to_site/index.m3u8
+#EXTINF:-1 group-title="其他地区",Авто Плюс
+http://31.148.48.15/Avto_Plus/index.m3u8
 #EXTINF:-1 group-title="其他地区",Аист ТВ
 http://live2-aisttv.cdnvideo.ru/aisttv2/aisttv.sdp/playlist.m3u8
 #EXTINF:-1 group-title="其他地区",Арктика 24
@@ -8761,6 +8777,8 @@ https://vgtrkregion-reg.cdnvideo.ru/vgtrk/kaliningrad/zapad24-hd/index.m3u8
 https://tvzvezda.bonus-tv.ru/cdn/tvzvezda/playlist.m3u8
 #EXTINF:-1 group-title="其他地区",Звезда Плюс
 http://tvzvezda.bonus-tv.ru/cdn/zvezdaplus/playlist.m3u8
+#EXTINF:-1 group-title="其他地区",Зоо ТВ
+http://31.148.48.15/Zoo_TV/index.m3u8
 #EXTINF:-1 group-title="其他地区",Известия
 http://igi-hls.cdnvideo.ru/igi/igi_tcode/playlist.m3u8
 #EXTINF:-1 group-title="其他地区",Ингушетия ТВ
@@ -9490,11 +9508,13 @@ http://live.greektv.ca/hls1/greektv.m3u8
 #EXTINF:-1 group-title="希腊",Skai TV
 http://skai-live-back.siliconweb.com/media/cambria4/index.m3u8
 
-# ========== 德国 (53个频道) ==========
+# ========== 德国 (55个频道) ==========
 #EXTINF:-1 group-title="德国",24/7 Canal de Noticias
 https://panel.host-live.com:19360/cn247tv/cn247tv.m3u8
 #EXTINF:-1 group-title="德国",Aire de Santa Fe
 https://unlimited1-us.dps.live/airedesantafetv/airedesantafetv.smil/playlist.m3u8
+#EXTINF:-1 group-title="德国",ARD-alpha
+https://mcdn.br.de/br/fs/ard_alpha/hls/de/master.m3u8
 #EXTINF:-1 group-title="德国",Bel RTL
 https://bel-live-hls.akamaized.net/hls/live/2038650/BEL-Live-HLS/master.m3u8
 #EXTINF:-1 group-title="德国",Canal 11 de la Costa
@@ -9551,6 +9571,8 @@ https://rt-ger.rttv.com/dvr/rtdeutsch/playlist_4500Kb.m3u8
 https://rt-ger.rttv.com/dvr/rtdeutsch/playlist.m3u8
 #EXTINF:-1 group-title="德国",RTL 102.5 Best
 https://dd782ed59e2a4e86aabf6fc508674b59.msvdn.net/live/S76960628/OEPHRUIctA0M/playlist_video.m3u8
+#EXTINF:-1 group-title="德国",RTL 102.5 Bro&Sis
+https://dd782ed59e2a4e86aabf6fc508674b59.msvdn.net/live/S75007890/MUGHuxc9dQ3b/playlist_video.m3u8
 #EXTINF:-1 group-title="德国",RTL 102.5 Caliente
 https://dd782ed59e2a4e86aabf6fc508674b59.msvdn.net/live/S8448465/zTYa1Z5Op9ue/playlist_video.m3u8
 #EXTINF:-1 group-title="德国",RTL 102.5 Disco
@@ -9734,7 +9756,7 @@ https://rt-fra.rttv.com/dvr/rtfrance/playlist.m3u8
 #EXTINF:-1 group-title="法国",Travelxp France
 https://travelxp-travelxp-4-fr.rakuten.wurl.tv/playlist.m3u8
 
-# ========== 波兰 (8个频道) ==========
+# ========== 波兰 (9个频道) ==========
 #EXTINF:-1 group-title="波兰",EWTN Poland
 https://cdn3.wowza.com/1/ZHdrMWt1NjlDSzFu/bzdDVG10/hls/live/playlist.m3u8
 #EXTINF:-1 group-title="波兰",TVP Culiacán [Not 24/7]
@@ -9751,6 +9773,8 @@ https://5ca3e84a76d30.streamlock.net/gpacifico3/obregon.smil/playlist.m3u8
 https://lowa8026-cmyk.github.io/tvpvod/399723.m3u8
 #EXTINF:-1 group-title="波兰",TVP World
 https://lowa8026-cmyk.github.io/tvpvod/399731.m3u8
+#EXTINF:-1 group-title="波兰",W Polsce PL
+https://lowa8026-cmyk.github.io/WPolscePL.m3u8
 
 # ========== 泰国 (6个频道) ==========
 #EXTINF:-1 group-title="泰国",13 Siam Thai
