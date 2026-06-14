@@ -1,10 +1,9 @@
-# src/speed_tester.py - 简化版，适用于 GitHub Actions 环境
+# src/speed_tester.py - 批量进度输出版本
 
 import asyncio
 import aiohttp
 import time
 import re
-import sys
 from src.config import HEADERS, TIMEOUT, MAX_WORKERS
 from src.database import get_db_cache, channel_key
 from src.logger import logger
@@ -42,6 +41,9 @@ INVALID_CONTENT_PATTERNS = [
     r'live\.twitch\.tv/embed',
     r'youtube\.com',
 ]
+
+# 进度输出间隔（每处理多少个频道输出一次）
+PROGRESS_INTERVAL = 100
 
 
 def is_suspicious_url(url: str) -> bool:
@@ -103,10 +105,9 @@ async def probe_channel_advanced(session: aiohttp.ClientSession, channel: dict) 
                     return channel, head_latency, False, 0
                 
                 download_time = time.time() - start_download
-                speed = len(data) / download_time / 1024 if download_time > 0 else 0
                 final_latency = head_latency + int(download_time * 1000)
                 
-                return channel, final_latency, True, speed
+                return channel, final_latency, True, 0
                 
         except:
             return channel, head_latency, False, 0
@@ -119,6 +120,7 @@ async def test_channels_concurrent(channels_dict: dict) -> list:
     channels = list(channels_dict.values())
     db = await get_db_cache()
     
+    # 缓存读取
     cached_results = []
     to_probe = []
     
@@ -128,7 +130,6 @@ async def test_channels_concurrent(channels_dict: dict) -> list:
         if cached and cached.get("latency", 9999) < 5000:
             ch["latency"] = cached["latency"]
             ch["video_codec"] = cached.get("video_codec", "")
-            ch["speed"] = cached.get("speed", 0)
             cached_results.append(ch)
         else:
             to_probe.append(ch)
@@ -150,34 +151,34 @@ async def test_channels_concurrent(channels_dict: dict) -> list:
         async with aiohttp.ClientSession(connector=connector, timeout=timeout_config) as session:
             tasks = [bounded_probe(session, ch) for ch in to_probe]
             
-            # 简单的进度输出，不刷新行
             total = len(tasks)
             completed = 0
-            last_log = 0
+            last_progress = 0
             start_time = time.time()
+            valid_count = len(valid)
             
+            # 批量收集结果
             for coro in asyncio.as_completed(tasks):
-                ch, latency, ok, speed = await coro
+                ch, latency, ok, _ = await coro
                 completed += 1
-                
-                # 每完成 50 个或每 5 秒输出一次进度
-                now = time.time()
-                if completed - last_log >= 50 or (now - start_time) / 60 >= 1:
-                    percent = completed * 100 // total
-                    logger.info(f"  📡 测速进度: {completed}/{total} ({percent}%) - 有效: {len(valid)}")
-                    last_log = completed
                 
                 if ok:
                     ch["latency"] = latency
-                    ch["speed"] = speed
                     valid.append(ch)
+                    valid_count += 1
                     key = channel_key(ch["name"], ch["url"])
                     await db.set_speed_result(key, ch)
+                
+                # 每 PROGRESS_INTERVAL 个或全部完成时输出进度
+                if completed - last_progress >= PROGRESS_INTERVAL or completed == total:
+                    percent = completed * 100 // total
+                    elapsed = time.time() - start_time
+                    speed = completed / elapsed if elapsed > 0 else 0
+                    logger.info(f"  📡 测速进度: {completed}/{total} ({percent}%) - 有效: {valid_count} - 速度: {speed:.1f}频道/秒")
+                    last_progress = completed
     
-    def sort_key(ch):
-        return (ch.get("latency", 9999), -ch.get("speed", 0))
-    
-    valid.sort(key=sort_key)
+    # 排序
+    valid.sort(key=lambda x: x.get("latency", 9999))
     
     total = len(channels)
     filtered = total - len(valid)
