@@ -28,6 +28,7 @@ from src.config import (
     ENABLE_INCREMENTAL_FETCH,
     CACHE_RAW_HOURS,
     IPTV_ORG_ENABLE,
+    AUTONOMOUS_MODE,  # 从 config 导入
 )
 from src.fetcher import fetch_all_sources_incremental
 from src.parser import parse_and_dedupe
@@ -52,14 +53,10 @@ from src.overseas_filter import process_overseas_channels
 from src.special_categories import collect_and_append_special_categories
 
 
-# ========== 自治模式导入（新增） ==========
-AUTONOMOUS_MODE = os.getenv("AUTONOMOUS_MODE", "false").lower() == "true"
-
-
+# ========== 传统模式（原有逻辑） ==========
 async def run_legacy_mode():
     """
     原有模式 - 完整的采集、测速、验证、输出流程
-    保持与原 run.py 完全一致
     """
     logger.info("🚀 IPTV 智能整理平台启动 (传统模式)")
     logger.info(f"📡 配置：超时={TIMEOUT}s, 并发={MAX_WORKERS}, ffmpeg={FFMPEG_ENABLE}")
@@ -229,6 +226,7 @@ async def run_legacy_mode():
     return 0
 
 
+# ========== 自治模式（新架构） ==========
 async def run_autonomous_mode():
     """
     自治模式 - 使用新架构：源池 → 候选版 → 稳定版 → 质量回路
@@ -241,10 +239,12 @@ async def run_autonomous_mode():
     - 自动替换失效源
     - 固定源保护
     """
+    logger.info("=" * 60)
     logger.info("🤖 IPTV 自治系统启动")
     logger.info("=" * 60)
     
     try:
+        # 尝试导入自治模式模块
         from src.orchestrator import IPTVOrchestrator
         
         orchestrator = IPTVOrchestrator()
@@ -252,6 +252,7 @@ async def run_autonomous_mode():
         
         logger.info("=" * 60)
         logger.info("✅ 自治模式运行完成")
+        logger.info(f"📊 运行统计: {stats}")
         return 0
         
     except ImportError as e:
@@ -262,12 +263,16 @@ async def run_autonomous_mode():
         logger.info("   - src/stable/")
         logger.info("   - src/quality/")
         logger.info("   - src/orchestrator.py")
+        logger.info("")
+        logger.info("💡 或者设置 AUTONOMOUS_MODE=false 使用传统模式")
         return 1
     except Exception as e:
         logger.exception(f"❌ 自治模式运行失败: {e}")
+        logger.info("💡 可以设置 AUTONOMOUS_MODE=false 回退到传统模式")
         return 1
 
 
+# ========== 主入口 ==========
 async def main():
     """
     主入口 - 根据 AUTONOMOUS_MODE 环境变量选择运行模式
@@ -276,9 +281,14 @@ async def main():
     - AUTONOMOUS_MODE=false (默认): 传统模式
     - AUTONOMOUS_MODE=true: 自治模式
     """
-    if AUTONOMOUS_MODE:
+    # 从 config 导入 AUTONOMOUS_MODE
+    from src.config import AUTONOMOUS_MODE as AUTO_MODE
+    
+    if AUTO_MODE:
+        logger.info("🔀 根据 AUTONOMOUS_MODE=true 切换到自治模式")
         return await run_autonomous_mode()
     else:
+        logger.info("🔀 根据 AUTONOMOUS_MODE=false 使用传统模式")
         return await run_legacy_mode()
 
 
