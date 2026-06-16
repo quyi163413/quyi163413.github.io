@@ -27,37 +27,29 @@ from src.generator import generate_outputs_from_demo
 class IPTVOrchestrator:
     """
     IPTV 自治系统协调器 - 优化版
-    
-    工作流程:
-    1. 发现新源 -> 源池（限制数量）
-    2. 从缓存快速观察候选源
-    3. 候选源稳定后提升到稳定版
-    4. 从稳定版生成输出
     """
     
-    MAX_NEW_SOURCES_PER_RUN = 500      # 每次最多处理500个新源
-    MAX_OBSERVE_PER_RUN = 300          # 每次最多观察300个候选源
+    MAX_NEW_SOURCES_PER_RUN = 500
+    MAX_OBSERVE_PER_RUN = 300
     
     def __init__(self, data_dir: Path = None):
         self.data_dir = data_dir or Path("data")
         self.data_dir.mkdir(parents=True, exist_ok=True)
         
-        # 初始化各模块
         self.discoverer = SourceDiscoverer(self.data_dir / "source_pool.json")
         self.candidate_observer = CandidateObserver(self.data_dir / "candidate_pool.json")
         self.stable_manager = StableManager()
         self.quality_monitor = QualityMonitor(self.stable_manager)
         
-        # 运行统计
         self.stats = {
             "last_discover": None,
             "last_observe": None,
             "total_promoted": 0,
             "new_sources_count": 0,
-            "observed_count": 0
+            "observed_count": 0,
+            "stable_count_after": 0  # 新增：记录最终稳定源数量
         }
         
-        # 更新候选观察器配置
         CandidateObserver.MIN_SUCCESS_COUNT = CANDIDATE_MIN_SUCCESS
         CandidateObserver.MIN_SUCCESS_RATE = CANDIDATE_MIN_SUCCESS_RATE
         CandidateObserver.MAX_AVG_LATENCY = CANDIDATE_MAX_LATENCY
@@ -69,7 +61,6 @@ class IPTVOrchestrator:
         logger.info("=" * 50)
         
         try:
-            # 设置更短的超时
             db = await asyncio.wait_for(get_db_cache(), timeout=10)
             new_sources = await asyncio.wait_for(
                 self.discoverer.discover(db), 
@@ -84,11 +75,9 @@ class IPTVOrchestrator:
                 logger.info("✅ 没有发现新源")
                 return {}
             
-            # 限制新源数量
             if total_new > self.MAX_NEW_SOURCES_PER_RUN:
                 logger.warning(f"⚠️ 新源数量 {total_new} 超过限制 {self.MAX_NEW_SOURCES_PER_RUN}，只取前 {self.MAX_NEW_SOURCES_PER_RUN} 个")
             
-            # 批量添加到候选池
             added_sources = []
             count = 0
             for channel_name, sources in new_sources.items():
@@ -127,7 +116,6 @@ class IPTVOrchestrator:
             stable_count = len(self.candidate_observer.get_stable_candidates())
             logger.info(f"📊 候选池状态: {observing_count} 个正在观察，{stable_count} 个已稳定")
             
-            # 从缓存观察（快速），设置超时
             stable_candidates = await asyncio.wait_for(
                 self.candidate_observer.observe_batch_from_cache(
                     batch_size=self.MAX_OBSERVE_PER_RUN
@@ -163,19 +151,15 @@ class IPTVOrchestrator:
                 return 0
             
             promoted_count = 0
-            for obs in stable_candidates[:50]:  # 最多提升50个
-                # 检查稳定版是否已有该频道
+            for obs in stable_candidates[:50]:
                 existing = self.stable_manager.stable_sources.get(obs.channel_name)
                 
                 if existing and existing.is_fixed:
-                    logger.debug(f"⏭️ {obs.channel_name} 是固定源，跳过自动提升")
                     continue
                 
                 if existing and existing.latency < obs.avg_latency:
-                    logger.debug(f"⏭️ {obs.channel_name} 现有源延迟更低 ({existing.latency} < {obs.avg_latency})")
                     continue
                 
-                # 提升为稳定源
                 if self.stable_manager.promote_candidate(
                     obs.channel_name, obs.url, obs.avg_latency, ""
                 ):
@@ -191,17 +175,18 @@ class IPTVOrchestrator:
             logger.error(f"❌ 提升稳定源阶段失败: {e}")
             return 0
     
-    async def generate_output_phase(self):
-        """阶段4: 生成输出"""
+    async def generate_output_phase(self) -> int:
+        """阶段4: 生成输出，返回最终稳定源数量"""
         logger.info("=" * 50)
         logger.info("阶段4: 生成输出")
         logger.info("=" * 50)
         
         try:
+            # 先检查现有稳定源
             channels = self.stable_manager.get_output_channels()
             
             if not channels:
-                # 如果没有稳定源，尝试从固定源加载
+                # 尝试加载固定源
                 logger.warning("⚠️ 没有可输出的稳定源，尝试加载固定源...")
                 try:
                     from src.fixed_sources import CCTV_FIXED_SOURCES
@@ -213,16 +198,15 @@ class IPTVOrchestrator:
                     logger.info(f"📌 已加载 {loaded_count} 个固定源")
                     channels = self.stable_manager.get_output_channels()
                 except ImportError:
-                    logger.warning("⚠️ fixed_sources.py 未找到，跳过固定源加载")
+                    logger.warning("⚠️ fixed_sources.py 未找到")
             
             if not channels:
-                logger.warning("⚠️ 仍然没有可输出的源，跳过输出生成")
-                return
+                logger.warning("⚠️ 仍然没有可输出的源")
+                return 0
             
-            # 获取 demo 顺序
+            # 获取 demo 顺序并生成输出
             demo_order = parse_demo_order_with_categories() if ENABLE_DEMO_FILTER else []
             
-            # 生成输出
             if demo_order:
                 generate_outputs_from_demo(channels, demo_order)
             else:
@@ -236,30 +220,17 @@ class IPTVOrchestrator:
                 )
             
             logger.info(f"✅ 输出生成完成: {len(channels)} 个稳定源")
+            return len(channels)
             
         except Exception as e:
             logger.error(f"❌ 生成输出阶段失败: {e}")
+            return 0
     
     async def run_once(self) -> Dict:
-        """完整执行一次自治流程（带全局超时）"""
+        """完整执行一次自治流程"""
         logger.info("🚀 IPTV 自治系统启动")
         logger.info(f"📊 配置: 每批观察 {self.MAX_OBSERVE_PER_RUN} 个")
         
-        # 全局超时：整个自治流程最多运行120秒
-        try:
-            result = await asyncio.wait_for(self._run_internal(), timeout=120)
-            return result
-        except asyncio.TimeoutError:
-            logger.warning("⚠️ 自治流程全局超时（120秒），强制退出")
-            # 尝试生成输出（即使部分完成）
-            await self.generate_output_phase()
-            return self.stats
-        except Exception as e:
-            logger.exception(f"❌ 自治流程执行失败: {e}")
-            return self.stats
-    
-    async def _run_internal(self) -> Dict:
-        """内部执行逻辑"""
         try:
             # 1. 发现新源
             await self.discover_phase()
@@ -270,8 +241,9 @@ class IPTVOrchestrator:
             # 3. 提升稳定源
             await self.promote_phase(stable_candidates)
             
-            # 4. 生成输出
-            await self.generate_output_phase()
+            # 4. 生成输出，获取最终稳定源数量
+            stable_count = await self.generate_output_phase()
+            self.stats["stable_count_after"] = stable_count
             
             # 打印统计
             logger.info("=" * 50)
@@ -280,12 +252,12 @@ class IPTVOrchestrator:
             logger.info(f"  源池总数: {self.discoverer.get_statistics()['total']}")
             logger.info(f"  候选池总数: {self.candidate_observer.get_statistics()['total']}")
             logger.info(f"  候选池观察中: {self.candidate_observer.get_statistics()['observing']}")
-            logger.info(f"  稳定源数量: {len(self.stable_manager.get_active_sources())}")
+            logger.info(f"  稳定源数量: {stable_count}")
             logger.info(f"  固定源数量: {sum(1 for s in self.stable_manager.stable_sources.values() if s.is_fixed)}")
             logger.info(f"  累计提升: {self.stats['total_promoted']}")
             
         except Exception as e:
-            logger.exception(f"❌ 自治流程执行异常: {e}")
+            logger.exception(f"❌ 自治流程执行失败: {e}")
         
         return self.stats
 
