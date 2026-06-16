@@ -43,6 +43,7 @@ jobs:
     - name: 运行采集程序
       run: python -m src.run
       env:
+        # ===== 基础配置 =====
         MAX_WORKERS: 20
         TIMEOUT: 8
         FFMPEG_ENABLE: true
@@ -52,11 +53,40 @@ jobs:
         ENABLE_BLACKLIST: true
         DATABASE_ENABLE: true
         RUN_MODE: once
+        
+        # ===== 缓存优化 =====
+        CACHE_RAW_HOURS: 48
+        CACHE_SPEED_HOURS: 24
+        ENABLE_INCREMENTAL_FETCH: true
+        
+        # ===== iptv-org 融合 =====
         IPTV_ORG_ENABLE: true
+        IPTV_ORG_CDN: https://raw.githubusercontent.com/iptv-org/iptv/master/resources
+        IPTV_ORG_ADD_MAIN_LIST: true
+        IPTV_ORG_CACHE_HOURS: 72
+        
+        # ===== 全球频道 =====
         ENABLE_GLOBAL_CHANNELS: false
+        GLOBAL_CHANNELS_LIMIT: 200
+        
+        # ===== EPG 配置 =====
+        ENABLE_EPG_INJECTION: true
+        EPG_CACHE_DAYS: 7
+        
+        # ===== 输出格式 =====
         ENABLE_JSON_OUTPUT: true
         ENABLE_LITE_VERSION: true
         ENABLE_EPG_OUTPUT: true
+        
+        # ========== 🚀 自治模式（关键配置！） ==========
+        AUTONOMOUS_MODE: true   # <--- 启用自治模式
+        AUTO_UPDATE_STABLE: true
+        AUTO_REPLACE_FAILED: true
+        QUALITY_CHECK_INTERVAL: 24
+        CANDIDATE_OBSERVATION_HOURS: 24
+        CANDIDATE_MIN_SUCCESS: 10
+        CANDIDATE_MIN_SUCCESS_RATE: 0.8
+        CANDIDATE_MAX_LATENCY: 2000
 
     - name: 提交并推送更改到 main 分支
       run: |
