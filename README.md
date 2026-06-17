@@ -77,7 +77,6 @@ ffmpeg 缓存：验证结果缓存 7 天，避免重复调用
 布隆过滤器：高效去重，降低内存占用
 
 🏗️ 架构概览
-text
 ┌─────────────────────────────────────────────────────────────────┐
 │                        GitHub Actions                          │
 │                    (每 6 小时自动运行)                          │
@@ -112,7 +111,6 @@ https://你的用户名.github.io/ITV/tv.m3u
 https://你的用户名.github.io/ITV/tv.txt
 
 方式二：本地运行
-bash
 # 克隆项目
 git clone https://github.com/你的用户名/ITV.git
 cd ITV
@@ -129,8 +127,8 @@ python -m src.run
 
 # 运行（自治模式）
 AUTONOMOUS_MODE=true python -m src.run
+
 方式三：Docker 部署
-bash
 docker-compose up -d
 访问 http://设备IP:8080/tv.m3u
 
@@ -146,6 +144,95 @@ CACHE_RAW_HOURS	原始源缓存时长（小时）	48
 ENABLE_INCREMENTAL_FETCH	启用增量更新	true
 DYNAMIC_CONCURRENCY	动态并发控制	true
 ENABLE_BLOOM_FILTER	启用布隆过滤器去重	true
+自定义源
+编辑 src/config.py 中的 RAW_SOURCES 和 DIRECT_SOURCES 列表。
+
+固定源
+编辑 src/fixed_sources.py，添加你明确想保留的频道和 URL（如 CCTV-1 的稳定源）。
+
+📂 输出文件说明
+运行后，output/ 目录将包含：
+
+tv.m3u — 标准 M3U
+
+tv.txt — 标准 TXT
+
+tv_multi.m3u — 多源切换版
+
+tv_epg.m3u — EPG 兼容版
+
+tv_lite.m3u — 精简版（移动端优化）
+
+channels.json — JSON API
+
+stats.json — 运行统计
+
+shai.txt — 未匹配频道列表
+
+🧩 依赖说明
+Python 依赖
+text
+aiohttp>=3.9.0        # 异步 HTTP 请求
+aiosqlite>=0.19.0     # SQLite 异步支持
+tqdm>=4.66.0          # 进度条
+pypinyin>=0.49.0      # 拼音匹配（可选）
+系统依赖（可选）
+ffmpeg：用于深度验证（推荐安装，可大幅提高过滤准确性）
+
+❓ 常见问题
+1. 为什么自治模式没有产生稳定源？
+首次运行需要积累测速缓存，建议先运行几次传统模式后再启用自治模式。
+
+2. 播放列表中的频道无法播放？
+可能是源已失效，系统会在下次运行时自动替换（自治模式）或您可手动更新固定源。
+
+3. 如何增加新的分类？
+在 demo.txt 中添加新分类行（格式：分类名,#genre#），然后在该分类下列出频道名即可。
+
+4. 港澳台频道如何归类？
+所有香港、澳门、台湾频道会自动合并到 🌊港·澳·台 分类中（已在 demo_filter.py 中硬编码）。
+
+5. 拼音匹配需要额外安装什么？
+安装 pypinyin 即可：pip install pypinyin
+
+6. 能否关闭 ffmpeg 深度验证？
+设置 FFMPEG_MODE=off 或 FFMPEG_ENABLE=false。
+
+📝 自定义 demo.txt 示例
+text
+📺央视频道,#genre#
+CCTV-1
+CCTV-2
+CCTV-3
+...
+
+📡卫视频道,#genre#
+广东卫视
+浙江卫视
+...
+
+☘️北京频道,#genre#
+北京卫视
+北京科教
+...
+
+🌊港·澳·台,#genre#
+翡翠台
+明珠台
+...
+🤝 贡献指南
+欢迎提交 Issue 和 Pull Request！请确保代码符合 PEP8 规范，并添加必要的注释。
+
+📜 免责声明
+本项目仅用于个人学习和研究，所有节目源均来自互联网公开可访问链接，项目本身不存储、不修改任何媒体内容。严禁将本项目用于商业传播或非法用途。因违规使用产生的任何法律责任由使用者自行承担。
+
+📄 许可证
+MIT License © 2026
+
+🎉 感谢使用 IPTV 智能整理平台！如果觉得有用，欢迎 Star ⭐
+
+本回答由 AI 生成，内容仅供参考，请仔细甄别。
+
 自定义源
 编辑 src/config.py 中的 RAW_SOURCES 和 DIRECT_SOURCES 列表。
 
