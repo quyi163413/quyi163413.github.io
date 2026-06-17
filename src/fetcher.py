@@ -12,6 +12,24 @@ class FetchError(Exception):
     pass
 
 
+# ========== 全局连接池（复用TCP连接） ==========
+_CONNECTOR = None
+
+
+def get_connector() -> aiohttp.TCPConnector:
+    """获取全局连接池，复用TCP连接"""
+    global _CONNECTOR
+    if _CONNECTOR is None:
+        _CONNECTOR = aiohttp.TCPConnector(
+            limit=100,              # 总连接数限制
+            limit_per_host=20,      # 每个主机最大连接数
+            ttl_dns_cache=300,      # DNS缓存5分钟
+            enable_cleanup_closed=True,
+            force_close=False,      # 保持连接复用
+        )
+    return _CONNECTOR
+
+
 async def fetch_url_with_metadata(session: aiohttp.ClientSession, url: str, db):
     """
     拉取单个 URL 的内容，支持缓存和重试
@@ -60,7 +78,9 @@ async def fetch_all_sources_incremental(sources: list, db, force_refresh: bool =
     Returns:
         {url: content} 字典
     """
-    async with aiohttp.ClientSession() as session:
+    connector = get_connector()
+    timeout_config = aiohttp.ClientTimeout(total=TIMEOUT + 5)
+    async with aiohttp.ClientSession(connector=connector, timeout=timeout_config) as session:
         tasks = []
         for url in sources:
             if force_refresh:
