@@ -21,13 +21,11 @@ from src.config import (
     MAX_WORKERS,
     TIMEOUT,
     FFMPEG_ENABLE,
-    ENABLE_GLOBAL_CHANNELS,
     ENABLE_JSON_OUTPUT,
     ENABLE_LITE_VERSION,
     ENABLE_EPG_OUTPUT,
     ENABLE_INCREMENTAL_FETCH,
     CACHE_RAW_HOURS,
-    IPTV_ORG_ENABLE,
     AUTONOMOUS_MODE,
 )
 from src.fetcher import fetch_all_sources_incremental
@@ -45,9 +43,7 @@ from src.demo_filter import (
 from src.database import get_db_cache
 from src.logger import logger
 
-# 新增导入
-from src.iptv_org_adapter import get_iptv_org_adapter
-from src.global_channels import get_global_selector
+# 新增导入（保留自治模式相关）
 from src.generator_enhanced import EnhancedOutputGenerator
 from src.overseas_filter import process_overseas_channels
 from src.special_categories import collect_and_append_special_categories
@@ -63,13 +59,6 @@ async def run_legacy_mode():
     logger.info(
         f"📋 增强过滤: demo={ENABLE_DEMO_FILTER}, alias={ENABLE_ALIAS}, blacklist={ENABLE_BLACKLIST}"
     )
-    
-    if IPTV_ORG_ENABLE:
-        logger.info("🌍 iptv-org 融合模式已启用")
-        if ENABLE_GLOBAL_CHANNELS:
-            logger.info("🌍 全球频道扩展已启用")
-        else:
-            logger.info("🌍 全球频道扩展已禁用")
 
     demo_order = parse_demo_order_with_categories() if ENABLE_DEMO_FILTER else []
     logger.info(f"📋 Demo 顺序: {len(demo_order)} 个频道")
@@ -148,11 +137,6 @@ async def run_legacy_mode():
         logger.error("❌ 过滤后无有效频道")
         return 1
 
-    if ENABLE_GLOBAL_CHANNELS:
-        logger.info("🌍 正在合并全球频道...")
-        global_selector = get_global_selector()
-        ordered_channels = await global_selector.merge_with_domestic(ordered_channels)
-
     cat_counter = Counter(ch.get("demo_category", "其他") for ch in ordered_channels)
     logger.info("\n🎉 最终有效频道分类统计：")
     for cat, cnt in cat_counter.items():
@@ -190,8 +174,6 @@ async def run_legacy_mode():
         "category_stats": dict(cat_counter),
         "unmatched_count": len(unmatched_channels) if unmatched_channels else 0,
         "features": {
-            "iptv_org_enabled": IPTV_ORG_ENABLE,
-            "global_channels_enabled": ENABLE_GLOBAL_CHANNELS,
             "epg_injection_enabled": ENABLE_EPG_OUTPUT,
             "incremental_mode": is_fresh and ENABLE_INCREMENTAL_FETCH
         }
