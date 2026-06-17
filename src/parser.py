@@ -39,6 +39,62 @@ def parse_m3u(content: str) -> list:
             i += 1
     return channels
 
+def infer_category_from_name(name: str) -> str:
+    """根据频道名推断分类（用于港澳台日源）"""
+    name_lower = name.lower()
+    if any(kw in name_lower for kw in ["tvb", "翡翠", "明珠", "无线", "rthk", "hoy", "viu"]):
+        return "香港频道"
+    if any(kw in name_lower for kw in ["澳视", "澳门", "macau", "tdm"]):
+        return "澳门频道"
+    if any(kw in name_lower for kw in ["东森", "民视", "台视", "华视", "中视", "三立", "纬来", "tvbs", "年代", "壹电视"]):
+        return "台湾频道"
+    if any(kw in name_lower for kw in ["nhk", "japan", "tokyo", "fuji", "tbs", "tv asahi", "ntv", "japanese"]):
+        return "日本频道"
+    return "港澳台日"
+
+def parse_m3u(content: str) -> list:
+    channels = []
+    lines = content.splitlines()
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
+        if line.startswith("#EXTINF"):
+            group_title = ""
+            tvg_id = ""
+            tvg_logo = ""
+            match = re.search(r'group-title="([^"]+)"', line)
+            if match:
+                group_title = match.group(1)
+            match = re.search(r'tvg-id="([^"]+)"', line)
+            if match:
+                tvg_id = match.group(1)
+            match = re.search(r'tvg-logo="([^"]+)"', line)
+            if match:
+                tvg_logo = match.group(1)
+            # 提取频道名（逗号之后）
+            parts = line.split(",")
+            if len(parts) >= 2:
+                name = ",".join(parts[1:]).strip()  # 可能有多个逗号
+            else:
+                name = line
+            # 如果 group_title 为空，尝试推断
+            if not group_title:
+                group_title = infer_category_from_name(name)
+            if i+1 < len(lines) and not lines[i+1].startswith("#"):
+                url = lines[i+1].strip()
+                if url.startswith(("http://", "https://", "rtmp://", "rtsp://")):
+                    channels.append({
+                        "name": name,
+                        "url": url,
+                        "group_title": group_title,
+                        "tvg_id": tvg_id,
+                        "tvg_logo": tvg_logo
+                    })
+            i += 2
+        else:
+            i += 1
+    return channels
+    
 def parse_txt(content: str) -> list:
     channels = []
     lines = content.splitlines()
