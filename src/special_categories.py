@@ -9,13 +9,19 @@ from src.logger import logger
 
 # ========== 分类关键词（优先级从高到低）==========
 
-# 韩国女团关键词（最高优先级）
+# 韩国女团关键词
 KOREAN_GIRL_KEYWORDS = [
     "韩国女团", "女团", "kpop", "K-pop", "KPOP",
     "BLACKPINK", "TWICE", "IVE", "NewJeans", "LESSERAFIM", 
     "aespa", "Red Velvet", "ITZY", "(G)I-DLE", "少女时代",
-    "女团社", "颜老师", "歌团",  # 添加"歌团"关键词
-    "歌团★",  # 添加带星号的格式
+    "女团社", "颜老师", "歌团", "歌团★"
+]
+
+# 戏曲类关键词
+OPERA_KEYWORDS = [
+    "戏曲", "京剧", "越剧", "黄梅戏", "豫剧", "评剧", "秦腔", "昆曲",
+    "粤剧", "河北梆子", "梨园", "梨园春", "移动戏曲", "岭南戏曲",
+    "陕西戏曲", "河南戏曲", "安徽戏曲", "戏曲广播"
 ]
 
 # 电影类关键词
@@ -26,23 +32,17 @@ MOVIE_KEYWORDS = [
     "抗战经典影片", "经典香港电影", "CHC影迷电影", "CHC动作电影", "CHC家庭影院"
 ]
 
-# 戏曲类关键词
-OPERA_KEYWORDS = [
-    "戏曲", "京剧", "越剧", "黄梅戏", "豫剧", "评剧", "秦腔", "昆曲",
-    "粤剧", "河北梆子", "梨园", "梨园春", "移动戏曲", "岭南戏曲",
-    "陕西戏曲", "河南戏曲", "安徽戏曲", "戏曲广播"
+# 电台类关键词（优先级提高，放在音乐之前）
+RADIO_KEYWORDS = [
+    "电台", "广播", "FM", "AM", "网络电台", "音频", "听书", "有声",
+    "动听", "音乐广播", "交通广播", "新闻广播", "经济广播", "文艺广播"
 ]
 
-# 音乐类关键词
+# 音乐类关键词（放在电台之后）
 MUSIC_KEYWORDS = [
     "音乐", "歌曲", "老歌", "金曲", "流行", "经典老歌", "香香音乐",
     "好听", "DJ", "舞曲", "动感", "节奏", "音悦", "经典歌曲",
     "热门歌曲", "动感舞曲"
-]
-
-# 电台类关键词
-RADIO_KEYWORDS = [
-    "电台", "广播", "FM", "AM", "网络电台", "音频", "听书", "有声"
 ]
 
 # ========== 需要排除的关键词 ==========
@@ -50,7 +50,14 @@ EXCLUDE_KEYWORDS = [
     "广场舞", "健身", "教学", "讲座", "访谈", "天气预报",
     "CCTV", "卫视", "电视台", "新闻", "财经", "体育", "少儿", "卡通",
     "直播", "回放", "全场", "世界杯", "NBA", "英超", "中超", "村超",
-    "穿越", "专区", "全折", "片段", "剧院", "演出"  # 排除戏曲相关的非戏曲内容
+    "穿越", "专区", "全折", "片段", "剧院", "演出"
+]
+
+# ========== 韩国女团中需要移除的频道名（精确匹配）==========
+KOREAN_GIRL_BLACKLIST = [
+    "周杰伦颜老师",
+    "三国颜老师",
+    "女团社颜老师"
 ]
 
 
@@ -78,15 +85,15 @@ def classify_channel_by_name(channel_name: str) -> str:
         if kw.lower() in name_lower:
             return "每日电影/经典电影"
     
-    # 5. 音乐类
-    for kw in MUSIC_KEYWORDS:
-        if kw.lower() in name_lower:
-            return "热门歌曲/动感舞曲"
-    
-    # 6. 电台类
+    # 5. 电台类（优先级高于音乐，避免广播被分到音乐）
     for kw in RADIO_KEYWORDS:
         if kw.lower() in name_lower:
             return "网络电台"
+    
+    # 6. 音乐类
+    for kw in MUSIC_KEYWORDS:
+        if kw.lower() in name_lower:
+            return "热门歌曲/动感舞曲"
     
     return "其他"
 
@@ -138,6 +145,17 @@ def parse_and_classify_special_categories(content: str) -> Dict[str, List[Tuple[
                     existing_urls = [u for _, u in result[category]]
                     if url not in existing_urls:
                         result[category].append((name, url))
+    
+    # ========== 后处理：从韩国女团中移除黑名单频道 ==========
+    if "韩国女团" in result:
+        original_count = len(result["韩国女团"])
+        result["韩国女团"] = [
+            (name, url) for name, url in result["韩国女团"]
+            if name not in KOREAN_GIRL_BLACKLIST
+        ]
+        removed = original_count - len(result["韩国女团"])
+        if removed > 0:
+            logger.info(f"📌 从韩国女团中移除了 {removed} 个指定频道")
     
     # 统计结果
     for cat in result:
