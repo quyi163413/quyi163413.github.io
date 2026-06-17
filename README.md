@@ -68,32 +68,33 @@
 
 ---
 
-## 🏗️ 架构概览
-
-```mermaid
-flowchart TD
-    A[GitHub Actions<br>每6小时自动运行] --> B[IPTV 智能整理平台]
-    
-    B --> C[多源采集<br>源池]
-    B --> D[候选版观察<br>验证]
-    B --> E[稳定版管理<br>输出]
-    
-    C --> D
-    D --> E
-    
-    F[质量回路<br>持续监控] --> C
-    F --> D
-    F --> E
-    
-    E --> G[输出文件]
-    
-    G --> H[tv.m3u]
-    G --> I[tv.txt]
-    G --> J[tv_multi.m3u]
-    G --> K[tv_epg.m3u]
-    G --> L[channels.json]
 
 ---
+
+## 方案二：纯文本缩进（最稳定，无渲染错误）
+
+```markdown
+## 🏗️ 架构概览
+
+**触发源**
+└── GitHub Actions（每 6 小时自动运行）
+
+**核心流程**
+├── 1. 多源采集（源池）
+│   └── 从 10+ 公开源拉取，自动去重
+├── 2. 候选版观察（验证）
+│   ├── HTTP 快速测速
+│   └── ffmpeg 深度验证
+└── 3. 稳定版管理（输出）
+    └── 生成 M3U / TXT / JSON 等格式
+
+**质量回路**
+└── 持续监控所有源，自动替换失效源
+
+**输出文件**
+├── tv.m3u / tv.txt
+├── tv_multi.m3u / tv_epg.m3u
+└── channels.json
 
 ## 效果预览
 
