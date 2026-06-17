@@ -34,7 +34,6 @@ def get_cdn_proxy() -> str:
         return ""  # GitHub Actions 环境直接访问
     return "https://gh-proxy.19860519.xyz/"
 
-
 # IPTV 源地址（原始 GitHub 链接）
 RAW_SOURCES = [
     "https://raw.githubusercontent.com/iptv-org/iptv/refs/heads/master/streams/cn.m3u",
@@ -52,6 +51,21 @@ DIRECT_SOURCES = [
     "https://tv.19860519.xyz/abc123",
 ]
 
+# ========== 港澳台日专用源（新增） ==========
+HMTJ_SOURCES = [
+    "https://live.hacks.tools/tv/ipv4/categories/hong_kong.m3u",  # 香港
+    "https://live.hacks.tools/tv/ipv4/categories/macau.m3u",      # 澳门
+    "https://live.hacks.tools/tv/ipv4/categories/taiwan.m3u",     # 台湾
+    "https://live.hacks.tools/iptv/languages/jpn.m3u",            # 日本
+]
+
+# 是否启用港澳台日源
+ENABLE_HMTJ_SOURCES = os.getenv("ENABLE_HMTJ_SOURCES", "true").lower() == "true"
+
+# 如果启用，追加到 IPTV_SOURCES
+if ENABLE_HMTJ_SOURCES:
+    IPTV_SOURCES.extend(HMTJ_SOURCES)
+    print(f"🌏 已添加 {len(HMTJ_SOURCES)} 个港澳台日源")
 # 根据环境决定是否添加代理前缀
 PROXY = get_cdn_proxy()
 IPTV_SOURCES = []
