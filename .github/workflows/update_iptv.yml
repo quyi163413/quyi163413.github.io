@@ -51,6 +51,7 @@ jobs:
     - name: 运行采集程序
       run: python -m src.run
       env:
+        # 基础配置
         MAX_WORKERS: 20
         TIMEOUT: 8
         FFMPEG_ENABLE: true
@@ -60,12 +61,15 @@ jobs:
         ENABLE_BLACKLIST: true
         DATABASE_ENABLE: true
         RUN_MODE: once
+        # 缓存优化
         CACHE_RAW_HOURS: 48
         CACHE_SPEED_HOURS: 24
         ENABLE_INCREMENTAL_FETCH: true
+        # 输出配置
         ENABLE_JSON_OUTPUT: true
         ENABLE_LITE_VERSION: false
         ENABLE_EPG_OUTPUT: false
+        # 自治模式
         AUTONOMOUS_MODE: true
         AUTO_UPDATE_STABLE: true
         AUTO_REPLACE_FAILED: true
@@ -74,9 +78,11 @@ jobs:
         CANDIDATE_MIN_SUCCESS: 10
         CANDIDATE_MIN_SUCCESS_RATE: 0.8
         CANDIDATE_MAX_LATENCY: 2000
+        # 动态并发
         DYNAMIC_CONCURRENCY: true
         MIN_WORKERS: 5
-        MAX_WORKERS: 20
+        # 注意：MAX_WORKERS 已经在上面定义，不再重复
+        # ffmpeg 模式
         FFMPEG_MODE: deep
         FFPROBE_CACHE_HOURS: 168
 
