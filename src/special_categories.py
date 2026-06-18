@@ -1,22 +1,24 @@
 # src/special_categories.py
-"""特殊分类采集模块 - 增强版：智能分类所有频道"""
+"""智能分类模块 - 将 abc123 源的频道融入 demo 分类体系"""
 
 import re
 from typing import List, Dict, Tuple
 from pathlib import Path
+from collections import defaultdict
 
 from src.logger import logger
+from src.classifier import PROVINCES
 
-# ========== 分类关键词 ==========
-CATEGORY_KEYWORDS = {
+
+# ========== 新分类关键词（用于创建新分类） ==========
+NEW_CATEGORY_KEYWORDS = {
     "🎬 电影频道": [
         "电影", "影院", "影片", "CHC", "动作电影", "家庭影院", "影迷电影",
-        "经典电影", "华语影院", "峨眉电影", "第一剧场", "怀旧剧场", "风云剧场",
-        "家庭剧场", "惊悚悬疑", "超级电影", "黑莓电影", "新片放映厅",
-        "抗战经典影片", "经典香港电影"
+        "经典电影", "华语影院", "峨眉电影", "新片放映厅", "抗战经典影片",
+        "经典香港电影", "CHC影迷电影", "CHC动作电影", "CHC家庭影院"
     ],
     "📺 电视剧频道": [
-        "电视剧", "剧场", "热播", "TVB", "港剧", "韩剧", "美剧", "日剧"
+        "电视剧", "剧场", "热播", "TVB", "港剧", "韩剧", "美剧", "日剧", "穿越剧"
     ],
     "🎤 韩国女团": [
         "韩国女团", "女团", "kpop", "K-pop", "KPOP", "BLACKPINK", "TWICE",
@@ -41,10 +43,6 @@ CATEGORY_KEYWORDS = {
         "法甲", "中超", "欧冠", "亚冠", "斯诺克", "WTA", "WTT", "BWF",
         "UFC", "赛车", "F1", "电竞", "五星体育"
     ],
-    "📰 新闻频道": [
-        "新闻", "资讯", "报道", "CGTN", "CNN", "BBC", "NHK", "凤凰",
-        "卫视", "综合频道", "公共频道"
-    ],
     "👶 少儿频道": [
         "少儿", "儿童", "卡通", "动画", "金鹰卡通", "嘉佳卡通", "卡酷",
         "炫动卡通", "优漫卡通"
@@ -52,261 +50,218 @@ CATEGORY_KEYWORDS = {
     "💰 财经频道": [
         "财经", "经济", "财富", "金融", "股票", "投资"
     ],
-    "📡 央视": [
-        "CCTV", "央视", "中央台"
-    ],
-    "📡 卫视": [
-        "卫视", "东方卫视", "北京卫视", "湖南卫视", "浙江卫视", "江苏卫视",
-        "广东卫视", "深圳卫视", "天津卫视", "山东卫视", "安徽卫视",
-        "湖北卫视", "黑龙江卫视", "江西卫视", "河南卫视", "河北卫视",
-        "山西卫视", "陕西卫视", "甘肃卫视", "宁夏卫视", "青海卫视",
-        "云南卫视", "贵州卫视", "广西卫视", "内蒙古卫视", "新疆卫视",
-        "西藏卫视", "海南卫视", "东南卫视", "重庆卫视", "四川卫视",
-        "辽宁卫视", "吉林卫视", "厦门卫视", "大湾区卫视", "海峡卫视"
-    ],
-    "🏛️ 地方频道": [
-        "电视台", "频道", "新闻综合", "都市频道", "生活频道", "经济频道",
-        "科教频道", "影视", "少儿", "公共", "文艺", "旅游", "农业"
-    ],
     "🌍 国际频道": [
-        "国际", "海外", "美洲", "欧洲", "亚洲", "环球"
-    ]
+        "国际", "海外", "美洲", "欧洲", "亚洲", "环球", "CGTN"
+    ],
+    "🎬 综合频道": [
+        "综合", "生活", "休闲", "旅游", "农业", "教育", "法治", "军事"
+    ],
+    "🎭 其他": []
 }
 
-# 需要排除的关键词（不采集）
+
+# 需要排除的关键词
 EXCLUDE_KEYWORDS = [
     "广场舞", "健身", "教学", "讲座", "访谈", "天气预报",
     "直播", "回放", "全场", "解说", "原声", "字幕"
 ]
 
 
-def classify_channel_by_name(channel_name: str) -> str:
-    """根据频道名智能分类"""
-    name = channel_name.strip()
-    if not name:
-        return "其他"
-    
+def detect_category_for_demo(name: str, demo_order: List[Tuple[str, str]]) -> Tuple[str, bool]:
+    """
+    根据频道名判断应该归入哪个 demo 分类
+    返回 (分类名, 是否匹配成功)
+    """
     name_lower = name.lower()
     
-    # 先排除不相关的内容
+    # 1. 检测央视
+    if re.search(r'(cctv|央视|中央台)', name_lower):
+        for cat, _ in demo_order:
+            if '央视' in cat:
+                return cat, True
+        # 如果没有央视分类，创建新分类
+        return "📡 央视", False
+    
+    # 2. 检测省份/城市（地方频道）
+    for prov in PROVINCES:
+        if prov in name:
+            # 查找 demo 中是否有对应的省份分类
+            for cat, _ in demo_order:
+                if prov in cat and ('频道' in cat or '☘️' in cat):
+                    return cat, True
+            # 否则创建新分类
+            return f"☘️{prov}频道", False
+    
+    # 3. 检测直辖市简称
+    alias_map = {"京": "北京", "沪": "上海", "津": "天津", "渝": "重庆"}
+    for short, full in alias_map.items():
+        if short in name:
+            for cat, _ in demo_order:
+                if full in cat and ('频道' in cat or '☘️' in cat):
+                    return cat, True
+            return f"☘️{full}频道", False
+    
+    # 4. 检测卫视（没有省份关键词的卫视）
+    if '卫视' in name:
+        for cat, _ in demo_order:
+            if '卫视' in cat:
+                return cat, True
+        # 如果没有，归入"卫视"分类（可能 demo 中有）
+        # 但 demo 中通常有"📡卫视频道"，我们找一下
+        for cat, _ in demo_order:
+            if '卫视' in cat:
+                return cat, True
+        return "📡 卫视", False
+    
+    # 5. 检测港澳台
+    hmtj_keywords = ["香港", "澳门", "台湾", "港", "澳", "台"]
+    for kw in hmtj_keywords:
+        if kw in name:
+            for cat, _ in demo_order:
+                if '港澳台' in cat or '港·澳·台' in cat:
+                    return cat, True
+            return "🌊港·澳·台", False
+    
+    # 6. 没有匹配到任何已有分类
+    return None, False
+
+
+def classify_new_category(name: str) -> str:
+    """对未匹配 demo 的频道，根据关键词判断应创建的新分类"""
+    name_lower = name.lower()
+    
+    # 排除项
     for exclude in EXCLUDE_KEYWORDS:
         if exclude.lower() in name_lower:
-            return "跳过"
+            return None  # 跳过
     
-    # 按优先级匹配分类
-    for category, keywords in CATEGORY_KEYWORDS.items():
+    # 按优先级匹配新分类
+    for category, keywords in NEW_CATEGORY_KEYWORDS.items():
+        if category == "🎭 其他":
+            continue
         for kw in keywords:
             if kw.lower() in name_lower:
                 return category
     
-    # 特殊处理：如果包含"频道"但未匹配任何分类，归入"地方频道"
+    # 如果包含"频道"但未匹配，归入"综合频道"
     if "频道" in name:
-        return "🏛️ 地方频道"
+        return "🎬 综合频道"
     
-    return "其他"
+    return "🎭 其他"
 
 
-def parse_and_classify_special_categories(content: str) -> Dict[str, List[Tuple[str, str]]]:
+async def fetch_and_classify_special_sources(db=None, demo_order: List[Tuple[str, str]] = None) -> Dict[str, List[Tuple[str, str]]]:
     """
-    从源内容中解析所有频道并智能分类
+    从 abc123 源采集频道，并智能映射到 demo 分类或新分类
     返回: {分类名: [(频道名, URL), ...]}
     """
-    if not content:
+    source_url = "https://tv.19860519.xyz/abc123"
+    from src.fetcher import fetch_url_with_metadata
+    
+    try:
+        content = await fetch_url_with_metadata(source_url, db)
+        if not content:
+            logger.warning(f"⚠️ 无法获取源: {source_url}")
+            return {}
+    except Exception as e:
+        logger.error(f"❌ 获取源失败: {e}")
         return {}
     
-    # 初始化结果字典
-    result = {cat: [] for cat in CATEGORY_KEYWORDS.keys()}
-    result["其他"] = []
-    result["跳过"] = []  # 用于统计
-    
+    # 解析所有频道
+    all_channels = []
     lines = content.splitlines()
-    current_category = None
-    
     for line in lines:
         line = line.strip()
-        if not line:
+        if not line or line.startswith('#') or line.endswith(',#genre#'):
             continue
-        
-        # 检测分类行（格式：分类名,#genre#）
-        if line.endswith(",#genre#"):
-            current_category = line.replace(",#genre#", "").strip()
-            continue
-        
-        # 跳过注释行
-        if line.startswith('#'):
-            continue
-        
-        # 解析频道行（格式：频道名,URL）
         if ',' in line:
             parts = line.split(',', 1)
             if len(parts) == 2:
                 name = parts[0].strip()
                 url = parts[1].strip()
-                
-                # 验证URL有效性
-                if not url.startswith(('http://', 'https://')):
-                    continue
-                
-                # 智能分类
-                category = classify_channel_by_name(name)
-                
-                if category == "跳过":
-                    result["跳过"].append((name, url))
-                    continue
-                
-                # 去重检查（基于URL）
-                existing_urls = [u for _, u in result[category]]
-                if url not in existing_urls:
-                    result[category].append((name, url))
+                if url.startswith(('http://', 'https://')):
+                    all_channels.append((name, url))
     
-    # 过滤掉空分类，并移除"跳过"分类
-    result.pop("跳过", None)
-    result = {k: v for k, v in result.items() if v}
+    # 分类结果
+    result = defaultdict(list)
+    demo_categories = {cat for cat, _ in demo_order} if demo_order else set()
     
-    # 统计结果
+    for name, url in all_channels:
+        # 先尝试匹配 demo 分类
+        if demo_order:
+            matched_cat, is_demo = detect_category_for_demo(name, demo_order)
+            if matched_cat and is_demo:
+                result[matched_cat].append((name, url))
+                continue
+        
+        # 未匹配 demo，创建新分类
+        new_cat = classify_new_category(name)
+        if new_cat is None:
+            # 跳过
+            continue
+        result[new_cat].append((name, url))
+    
+    # 去重（基于 URL）
+    for cat in result:
+        seen = set()
+        unique = []
+        for name, url in result[cat]:
+            if url not in seen:
+                seen.add(url)
+                unique.append((name, url))
+        result[cat] = unique
+    
+    # 统计
     total = sum(len(v) for v in result.values())
     logger.info(f"📊 智能分类统计: 共 {total} 个频道")
     for cat, channels in result.items():
         if channels:
             logger.info(f"   {cat}: {len(channels)} 个频道")
     
-    return result
+    return dict(result)
 
 
-async def fetch_special_categories_source(db=None) -> Dict[str, List[Tuple[str, str]]]:
-    """获取特殊分类源并解析"""
-    from src.fetcher import fetch_url_with_metadata
-    
-    source_url = "https://tv.19860519.xyz/abc123"
-    
-    try:
-        content = await fetch_url_with_metadata(source_url, db)
-        if content:
-            return parse_and_classify_special_categories(content)
-        else:
-            logger.warning(f"⚠️ 无法获取特殊分类源: {source_url}")
-            return {}
-    except Exception as e:
-        logger.error(f"❌ 获取特殊分类源失败: {e}")
-        return {}
-
-
-# 分类显示名称映射（用于输出）
-CATEGORY_DISPLAY_NAME = {
-    "🎬 电影频道": "🎬 电影频道",
-    "📺 电视剧频道": "📺 电视剧频道",
-    "🎤 韩国女团": "🎤 韩国女团",
-    "🎭 戏曲频道": "🎭 戏曲频道",
-    "🎵 音乐频道": "🎵 音乐频道",
-    "📻 网络电台": "📻 网络电台",
-    "🏀 体育频道": "🏀 体育频道",
-    "📰 新闻频道": "📰 新闻频道",
-    "👶 少儿频道": "👶 少儿频道",
-    "💰 财经频道": "💰 财经频道",
-    "📡 央视": "📡 央视",
-    "📡 卫视": "📡 卫视",
-    "🏛️ 地方频道": "🏛️ 地方频道",
-    "🌍 国际频道": "🌍 国际频道",
-    "其他": "其他",
-}
-
-
-def append_special_categories_to_m3u(
+def append_special_to_output(
     special_data: Dict[str, List[Tuple[str, str]]],
-    output_path: Path
-) -> int:
-    """将特殊分类追加到 M3U 文件末尾"""
+    output_dir: Path,
+    demo_order: List[Tuple[str, str]]
+) -> Dict[str, int]:
+    """
+    将分类好的频道追加到输出文件
+    - 如果分类在 demo_order 中，则插入到该分类末尾（不破坏顺序）
+    - 如果分类不在 demo_order 中，则追加到文件末尾的新分类区块
+    但这里简化处理：直接追加到文件末尾，因为插入会破坏现有文件的顺序结构。
+    我们按照现有方式追加到末尾，但分类名会与 demo 分类保持一致。
+    """
     if not special_data:
-        return 0
-    
-    total_appended = 0
-    
-    with open(output_path, 'a', encoding='utf-8') as f:
-        f.write(f"\n# ========== 智能分类内容 ==========\n")
-        
-        # 按照固定顺序输出
-        order = [
-            "🎬 电影频道", "📺 电视剧频道", "🎤 韩国女团", "🎭 戏曲频道",
-            "🎵 音乐频道", "📻 网络电台", "🏀 体育频道", "📰 新闻频道",
-            "👶 少儿频道", "💰 财经频道", "📡 央视", "📡 卫视",
-            "🏛️ 地方频道", "🌍 国际频道", "其他"
-        ]
-        
-        for cat in order:
-            channels = special_data.get(cat, [])
-            if not channels:
-                continue
-            
-            display_name = CATEGORY_DISPLAY_NAME.get(cat, cat)
-            f.write(f"\n# ----- {display_name} ({len(channels)}个频道) -----\n")
-            
-            for name, url in channels:
-                f.write(f'#EXTINF:-1 group-title="{display_name}",{name}\n{url}\n')
-                total_appended += 1
-    
-    logger.info(f"✅ 已将 {total_appended} 个频道追加到 M3U: {output_path}")
-    return total_appended
-
-
-def append_special_categories_to_txt(
-    special_data: Dict[str, List[Tuple[str, str]]],
-    output_path: Path
-) -> int:
-    """将特殊分类追加到 TXT 文件末尾"""
-    if not special_data:
-        return 0
-    
-    total_appended = 0
-    
-    with open(output_path, 'a', encoding='utf-8') as f:
-        f.write(f"\n# ========== 智能分类内容 ==========\n")
-        
-        order = [
-            "🎬 电影频道", "📺 电视剧频道", "🎤 韩国女团", "🎭 戏曲频道",
-            "🎵 音乐频道", "📻 网络电台", "🏀 体育频道", "📰 新闻频道",
-            "👶 少儿频道", "💰 财经频道", "📡 央视", "📡 卫视",
-            "🏛️ 地方频道", "🌍 国际频道", "其他"
-        ]
-        
-        for cat in order:
-            channels = special_data.get(cat, [])
-            if not channels:
-                continue
-            
-            display_name = CATEGORY_DISPLAY_NAME.get(cat, cat)
-            f.write(f"\n{display_name},#genre#\n")
-            
-            for name, url in channels:
-                f.write(f"{name},{url}\n")
-                total_appended += 1
-    
-    logger.info(f"✅ 已将 {total_appended} 个频道追加到 TXT: {output_path}")
-    return total_appended
-
-
-async def collect_and_append_special_categories(output_dir: Path, db=None) -> Dict[str, int]:
-    """主函数：采集并智能分类所有频道"""
-    logger.info("🎬 开始采集智能分类内容...")
-    
-    special_data = await fetch_special_categories_source(db)
-    
-    if not special_data:
-        logger.warning("⚠️ 未获取到任何内容")
         return {}
     
-    stats = {cat: len(channels) for cat, channels in special_data.items()}
-    total = sum(stats.values())
-    logger.info(f"📊 智能分类统计: 共 {total} 个有效频道")
-    
-    if total == 0:
-        logger.warning("⚠️ 没有可用的频道")
-        return {}
-    
-    # 追加到输出文件
+    # 追加到 M3U
     m3u_path = output_dir / "tv.m3u"
     txt_path = output_dir / "tv.txt"
     
-    append_special_categories_to_m3u(special_data, m3u_path)
-    append_special_categories_to_txt(special_data, txt_path)
+    total_appended = 0
     
-    return stats
+    # 写入 M3U
+    with open(m3u_path, 'a', encoding='utf-8') as f:
+        f.write(f"\n# ========== 智能补充内容 ==========\n")
+        for cat, channels in special_data.items():
+            if not channels:
+                continue
+            f.write(f"\n# ----- {cat} ({len(channels)}个频道) -----\n")
+            for name, url in channels:
+                f.write(f'#EXTINF:-1 group-title="{cat}",{name}\n{url}\n')
+                total_appended += 1
+    
+    # 写入 TXT
+    with open(txt_path, 'a', encoding='utf-8') as f:
+        f.write(f"\n# ========== 智能补充内容 ==========\n")
+        for cat, channels in special_data.items():
+            if not channels:
+                continue
+            f.write(f"\n{cat},#genre#\n")
+            for name, url in channels:
+                f.write(f"{name},{url}\n")
+    
+    logger.info(f"✅ 已将 {total_appended} 个智能分类频道追加到输出文件")
+    return {cat: len(ch) for cat, ch in special_data.items()}
