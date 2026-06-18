@@ -790,5 +790,16 @@
     "last_verified": null,
     "fail_count": 0,
     "status": "active"
+  },
+  "Xinjiang TV 8": {
+    "channel_name": "Xinjiang TV 8",
+    "url": "http://120.70.60.179:9901/tsfile/live/1002_1.m3u8?authid=0&key=txiptv&playlive=1",
+    "latency": 1984,
+    "video_codec": "",
+    "promoted_at": "2026-06-18T22:58:16.687493",
+    "is_fixed": false,
+    "last_verified": null,
+    "fail_count": 0,
+    "status": "active"
   }
 }

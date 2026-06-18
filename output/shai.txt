@@ -1,7 +1,7 @@
 # Demo筛选丢弃的频道
-# 原始频道总数: 419
+# 原始频道总数: 420
 # Demo匹配成功: 310
-# 丢弃数量: 109
+# 丢弃数量: 110
 
 NOW NEWS,http://cdn.163189.xyz/163189/now
 八度空间,https://cdn6.163189.xyz/163189/8tv
@@ -22,6 +22,7 @@ TVB Plus,http://r.jdshipin.com/Nr5jq
 Zhejiang TV International,https://ali-m-l.cztv.com/channels/lantian/channel10/1080p.m3u8
 数码时代,http://ali-m-l.cztv.com/channels/lantian/channel12/720p.m3u8?zzhed
 萧山生活频道,http://l.cztvcloud.com/channels/lantian/SXxiaoshan2/720p.m3u8?zzhed
+上虞1新闻综合 [Not 24/7],https://l.cztvcloud.com/channels/lantian/SXshangyu1/720p.m3u8
 萧山综合,http://l.cztvcloud.com/channels/lantian/SXxiaoshan1/720p.m3u8
 新昌新聞綜合 [Not 24/7],https://l.cztvcloud.com/channels/lantian/SXxinchang1/720p.m3u8
 1988年春晚,https://txmov2.a.kwimgs.com/bs3/video-hls/5216575810935394655_hlsb.m3u8
@@ -35,8 +36,8 @@ Zhejiang TV International,https://ali-m-l.cztv.com/channels/lantian/channel10/10
 乌镇龙形田,https://gcalic.v.myalicdn.com/gc/zjwzlxt_1/index.m3u8
 鸣沙山,https://gcalic.v.myalicdn.com/gc/dhyyqst_1/index.m3u8
 泰山主峰,https://gcalic.v.myalicdn.com/gc/taishan01_1/index.m3u8
-黄山排云亭,https://gcalic.v.myalicdn.com/gc/hspyt_1/index.m3u8
 狮子山鸟瞰丽江古城,https://gcalic.v.myalicdn.com/gc/ljgcszsnkgc_1/index.m3u8
+黄山排云亭,https://gcalic.v.myalicdn.com/gc/hspyt_1/index.m3u8
 泰山碧霞祠,https://gcalic.v.myalicdn.com/gc/hkts03_1/index.m3u8
 雪乡大石碑,https://gcalic.v.myalicdn.com/gc/mdjxxdsb_1/index.m3u8
 月牙泉,https://gcalic.v.myalicdn.com/gc/dhyyqsm_1/index.m3u8

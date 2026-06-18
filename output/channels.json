@@ -1,7 +1,7 @@
 {
   "version": "2.0",
   "total": 310,
-  "generated": "2026-06-18T22:33:24.619716",
+  "generated": "2026-06-18T23:00:53.666776",
   "channels": [
     {
       "name": "CCTV-1",
@@ -51,8 +51,8 @@
       "name": "CCTV-6",
       "urls": [
         "http://45.192.97.170:8880/play/7.m3u8",
-        "http://198.204.240.250:82/live/cctv6.m3u8",
-        "http://69.30.245.50/live/cctv6.m3u8"
+        "http://69.30.245.50/live/cctv6.m3u8",
+        "http://198.204.240.250:82/live/cctv6.m3u8"
       ],
       "latency": 50,
       "codec": "h264",
@@ -550,11 +550,11 @@
       "category": "☘️北京频道,#genre#"
     },
     {
-      "name": "上虞1新闻综合 [Not 24/7]",
+      "name": "云和新闻综合",
       "urls": [
-        "https://l.cztvcloud.com/channels/lantian/SXshangyu1/720p.m3u8"
+        "http://l.cztvcloud.com/channels/lantian/SXyunhe1/720p.m3u8"
       ],
-      "latency": 520,
+      "latency": 514,
       "codec": "h264",
       "category": "☘️上海频道,#genre#"
     },
@@ -1053,7 +1053,7 @@
       "urls": [
         "http://l.cztvcloud.com/channels/lantian/SXyuyao1/720p.m3u8"
       ],
-      "latency": 5280,
+      "latency": 575,
       "codec": "h264",
       "category": "☘️浙江频道,#genre#"
     },
@@ -1067,15 +1067,6 @@
       "category": "☘️浙江频道,#genre#"
     },
     {
-      "name": "云和新闻综合",
-      "urls": [
-        "http://l.cztvcloud.com/channels/lantian/SXyunhe1/720p.m3u8"
-      ],
-      "latency": 5515,
-      "codec": "h264",
-      "category": "☘️浙江频道,#genre#"
-    },
-    {
       "name": "中国蓝新闻",
       "urls": [
         "http://ali-m-l.cztv.com/channels/lantian/channel009/1080p.m3u8"
@@ -1085,11 +1076,20 @@
       "category": "☘️浙江频道,#genre#"
     },
     {
+      "name": "东阳影视生活",
+      "urls": [
+        "http://l.cztvcloud.com/channels/lantian/SXdongyang1/720p.m3u8"
+      ],
+      "latency": 762,
+      "codec": "h264",
+      "category": "☘️浙江频道,#genre#"
+    },
+    {
       "name": "上虞新闻综合",
       "urls": [
         "http://l.cztvcloud.com/channels/lantian/SXshangyu1/720p.m3u8?zzhed"
       ],
-      "latency": 6061,
+      "latency": 1175,
       "codec": "h264",
       "category": "☘️浙江频道,#genre#"
     },
@@ -2656,15 +2656,6 @@
       "category": "☘️福建频道,#genre#"
     },
     {
-      "name": "广西玉林大容山莲花山顶",
-      "urls": [
-        "https://gcalic.v.myalicdn.com/gc/drs01_1/index.m3u8"
-      ],
-      "latency": 574,
-      "codec": "h264",
-      "category": "☘️广西频道,#genre#"
-    },
-    {
       "name": "云南大理崇圣寺三塔远景",
       "urls": [
         "https://gcalic.v.myalicdn.com/gc/dlst01_1/index.m3u8"
@@ -2672,6 +2663,15 @@
       "latency": 574,
       "codec": "h264",
       "category": "☘️云南频道,#genre#"
+    },
+    {
+      "name": "广西玉林大容山莲花山顶",
+      "urls": [
+        "https://gcalic.v.myalicdn.com/gc/drs01_1/index.m3u8"
+      ],
+      "latency": 574,
+      "codec": "h264",
+      "category": "☘️广西频道,#genre#"
     },
     {
       "name": "望乡台",
