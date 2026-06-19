@@ -1,6 +1,6 @@
 {
-  "total_channels": 316,
-  "timestamp": "2026-06-19T03:07:29.329961",
+  "total_channels": 330,
+  "timestamp": "2026-06-19T03:42:01.966121",
   "category_stats": {
     "📺央视频道,#genre#": 27,
     "📡卫视频道,#genre#": 31,
@@ -11,8 +11,8 @@
     "☘️广东频道,#genre#": 6,
     "☘️浙江频道,#genre#": 56,
     "☘️江苏频道,#genre#": 25,
-    "☘️安徽频道,#genre#": 14,
-    "☘️福建频道,#genre#": 3,
+    "☘️安徽频道,#genre#": 17,
+    "☘️福建频道,#genre#": 4,
     "☘️河南频道,#genre#": 8,
     "☘️湖北频道,#genre#": 2,
     "☘️湖南频道,#genre#": 5,
@@ -20,7 +20,7 @@
     "☘️海南频道,#genre#": 1,
     "☘️四川频道,#genre#": 13,
     "☘️贵州频道,#genre#": 2,
-    "☘️云南频道,#genre#": 11,
+    "☘️云南频道,#genre#": 14,
     "☘️陕西频道,#genre#": 9,
     "☘️甘肃频道,#genre#": 1,
     "☘️青海频道,#genre#": 1,
@@ -28,13 +28,15 @@
     "☘️新疆频道,#genre#": 7,
     "☘️山西频道,#genre#": 4,
     "☘️辽宁频道,#genre#": 3,
-    "☘️吉林频道,#genre#": 21,
+    "☘️吉林频道,#genre#": 24,
     "☘️黑龙江频道,#genre#": 10,
     "☘️河北频道,#genre#": 15,
     "🌊港·澳·台,#genre#": 16,
-    "🌊港·澳·台": 9
+    "🌊港·澳·台": 9,
+    "☘️山东频道,#genre#": 2,
+    "☘️江西频道,#genre#": 2
   },
-  "unmatched_count": 111,
+  "unmatched_count": 97,
   "features": {
     "epg_injection_enabled": false,
     "incremental_mode": true
