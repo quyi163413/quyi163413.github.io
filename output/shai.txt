@@ -1,7 +1,7 @@
 # Demo筛选丢弃的频道
-# 原始频道总数: 619
-# Demo匹配成功: 455
-# 丢弃数量: 164
+# 原始频道总数: 625
+# Demo匹配成功: 458
+# 丢弃数量: 167
 
 1989年春晚,https://txmov2.a.kwimgs.com/bs3/video-hls/5194620763762726260_hlsb.m3u8
 新加坡国际,http://d2e1asnsl7br7b.cloudfront.net/7782e205e72f43aeb4a48ec97f66ebbe/index_5.m3u8
@@ -72,11 +72,11 @@ Trace Sports,https://lightning-tracesport-samsungau.amagi.tv/playlist1080p.m3u8
 航拍中国第一季,http://newcntv.qcloudcdn.com/asp/hls/4000/0303000a/3/default/8edf3fb6a69148ea9a7dc0b5a9d99fdb/4000.m3u8
 倩女幽魂人间道,http://jsmov2.a.yximgs.com/bs3/video-hls/5250634317044855747_hlsb.m3u8
 中视经典,http://74.91.26.218:82/live/ctvjd.m3u8
+游戏风云,https://live.264788.xyz/channel/youxifengyun?streamid=6e817b754189d2c8f7b32e7bff61ac7b&livekey=01WgOR41rriMmMkzNsd0UoaxJRwetZdxIvtVk
 新昌新聞綜合 [Not 24/7],https://l.cztvcloud.com/channels/lantian/SXxinchang1/720p.m3u8
 余杭未来E频道,http://l.cztvcloud.com/channels/lantian/SXyuhang3/720p.m3u8?zzhed
 自然传奇,http://newcntv.qcloudcdn.com/asp/hls/1200/0303000a/3/default/81a1ad3a661748bfb8560c92d38204ca/1200.m3u8
 CGTN Español,https://espanol-liveali.cgtn.com/hls/LSveOGBaBw41Ea7ukkVAUdKQ220802LSTexu6xAuFH8VZNBLE1ZNEa220802cd/playlist.m3u8
-游戏风云,https://live.264788.xyz/channel/youxifengyun?streamid=6e817b754189d2c8f7b32e7bff61ac7b&livekey=01WgOR41rriMmMkzNsd0UoaxJRwetZdxIvtVk
 魅力足球,http://dassby.qqff.top:99/live/快乐垂钓/index.m3u8
 玛纳斯,http://218.84.127.245:1026/hls/main1/playlist.m3u8?zxinjd
 Xinjiang TV 3,http://120.70.60.179:9901/tsfile/live/1006_1.m3u8?authid=0&key=txiptv&playlive=1
@@ -100,6 +100,7 @@ Harbin Movie Channel,https://stream.hrbtv.net/yspd/playlist.m3u8
 Tonghua TV,http://lsfb.avap.jilintv.cn/zqvk7vpj/channel/43ea5771aa44421591f9dfd2b71f1b9b/index.m3u8
 磐石,http://stream5.jlntv.cn/ps/sd/live.m3u8?zjild
 Siping TV,http://stream2.jlntv.cn/sptv/sd/live.m3u8?_upt=f27750421743154598
+五华综合,http://p2hs.vzan.com/slowlive/621139761151691240/live.m3u8
 Zhejiang TV International,https://ali-m-l.cztv.com/channels/lantian/channel10/1080p.m3u8
 Dali TV,http://www.dalitv.com.tw:4568/live/dali/index.m3u8
 武进生活 [Not 24/7],https://live.wjyanghu.com/live/CH2.m3u8
@@ -130,6 +131,7 @@ RT Français,https://rt-fra.rttv.com/dvr/rtfrance/playlist_4500Kb.m3u8
 Guangzhou TV,https://tencentplaybusiness.gztv.com/live/zonghes.m3u8
 Xinjiang TV 8,http://120.70.60.179:9901/tsfile/live/1002_1.m3u8?authid=0&key=txiptv&playlive=1
 Xizang TV Tibetan [Not 24/7],http://php.jdshipin.com:8880/xztv.php?id=zy
+解说_电影狂人,https://lbds.us.ci/18715610
 电影_许氏三杰,https://lbds.us.ci/11602033
 Chifeng Comprehensive News Chanel,http://play1-qk.nmtv.cn/live/1735546697341033.m3u8
 双辽,http://stream5.jlntv.cn/sl/sd/live.m3u8?zjild
@@ -139,31 +141,32 @@ Harbin Comprehensive News Channel,https://stream.hrbtv.net/xwzh/playlist.m3u8?_u
 春晚2024,https://p2.bdstatic.com/rtmp.liveshow.lss-user.baidubce.com/live/stream_bduid_6488563992_8982723413/merged_1707497046297_88536_25144_41936.m3u8
 东丰,http://stream5.jlntv.cn/df/sd/live.m3u8?zjild
 2024年春晚,https://p2.bdstatic.com/rtmp.liveshow.lss-user.baidubce.com/live/stream_bduid_6488563992_8982723413/merged_1707497046297_88536_25144_41936.m3u8
+名侦探柯南,https://lbds.us.ci/30080236
 Hebei TV,https://event.pull.hebtv.com/live/live101.m3u8
+解说_亮哥讲电影,https://lbds.us.ci/16144175
 电影_搞笑喜剧,https://lbds.us.ci/11342423
 电影_战争片,https://lbds.us.ci/21059574
+解说_扁豆看电影,https://lbds.us.ci/16028551
 象视界,http://1.94.31.214/php/hntv.php?id=xsj
 文物宝库,http://1.94.31.214/php/hntv.php?id=wwbk
 电影_推荐,https://lbds.us.ci/11602041
 凤凰古城东关门,https://gcalic.v.myalicdn.com/gc/fhgcdgm_1/index.m3u8
 电影_成龙,https://lbds.us.ci/11342386
 电影_热血,https://lbds.us.ci/11352934
-解说_电影狂人,https://lbds.us.ci/18715610
+电影_赛车,https://lbds.us.ci/11279247
 电影_洪金宝,https://lbds.us.ci/11279251
-电影_黄渤,https://lbds.us.ci/11352876
-电影_黑帮片,https://lbds.us.ci/11336719
-兵团五师双河影,https://liveout.btzx.com.cn/62ds9e/6o77s4.m3u8?zxinjd
+解说_阿良说剧,https://lbds.us.ci/20488841
 解说_越哥说电影,https://lbds.us.ci/15894162
+电影_喜剧专场,https://lbds.us.ci/11602044
+电影_黄渤,https://lbds.us.ci/11352876
+电影_经典女神,https://lbds.us.ci/11352909
+电影_黑帮片,https://lbds.us.ci/11336719
+电影_星爷,https://lbds.us.ci/11342412
+电影_罪犯,https://lbds.us.ci/11352962
+兵团五师双河影,https://liveout.btzx.com.cn/62ds9e/6o77s4.m3u8?zxinjd
 电影_强森,https://lbds.us.ci/21059581
 电影_玄幻,https://lbds.us.ci/11342414
 神雕侠侣,https://isus.cc/php/huya.php?id=11352964
-电影_星爷,https://lbds.us.ci/11342412
-电影_罪犯,https://lbds.us.ci/11352962
-电影_喜剧专场,https://lbds.us.ci/11602044
-解说_亮哥讲电影,https://lbds.us.ci/16144175
-解说_阿良说剧,https://lbds.us.ci/20488841
 电影_刘德华,https://lbds.us.ci/11342424
-解说_扁豆看电影,https://lbds.us.ci/16028551
-电影_赛车,https://lbds.us.ci/11279247
-名侦探柯南,https://lbds.us.ci/30080236
-电影_经典女神,https://lbds.us.ci/11352909
+电影_梁家辉,https://lbds.us.ci/11342429
+电影_盗墓,https://lbds.us.ci/21059552
