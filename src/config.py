@@ -164,6 +164,9 @@ MAX_WORKERS = int(os.getenv("MAX_WORKERS", 20))
 ENABLE_BLOOM_FILTER = os.getenv("ENABLE_BLOOM_FILTER", "true").lower() == "true"
 BLOOM_FILTER_CAPACITY = int(os.getenv("BLOOM_FILTER_CAPACITY", 100000))
 
+# ========== Web 管理界面配置 ==========
+ENABLE_WEB_MANAGER = os.getenv("ENABLE_WEB_MANAGER", "true").lower() == "true"
+
 # 打印自治模式状态
 if AUTONOMOUS_MODE:
     print("🤖 自治模式已启用")
