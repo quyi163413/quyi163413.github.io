@@ -32,4 +32,5 @@ def create_app():
 
 def run_server():
     app = create_app()
+    print(f"🌐 Web 管理界面启动: http://{WEB_SERVER_HOST}:{WEB_SERVER_PORT}")
     app.run(host=WEB_SERVER_HOST, port=WEB_SERVER_PORT, debug=False, threaded=True)
