@@ -12,15 +12,22 @@ cd /app
 RUN_MODE=${RUN_MODE:-once}
 INTERVAL=${SCHEDULE_INTERVAL:-21600}
 
-# 后台运行 HTTP 文件服务器
-echo "启动 HTTP 文件服务器，端口 ${WEB_SERVER_PORT:-8080}"
-cd /app/output
-python -m http.server ${WEB_SERVER_PORT:-8080} --bind 0.0.0.0 &
-HTTP_PID=$!
+# ========== 启动 Web 管理界面（Flask） ==========
+echo "启动 Web 管理界面，端口 ${WEB_SERVER_PORT:-8080}"
+python -m src.server &
+WEB_PID=$!
 
-# 等待 HTTP 服务启动
-sleep 2
+# 等待 Web 服务启动
+sleep 3
 
+# 检查 Web 服务是否正常运行
+if ! kill -0 $WEB_PID 2>/dev/null; then
+    echo "❌ Web 服务启动失败"
+    exit 1
+fi
+echo "✅ Web 管理界面已启动: http://localhost:${WEB_SERVER_PORT:-8080}"
+
+# ========== 采集任务 ==========
 run_collector() {
     while true; do
         echo "$(date): 开始采集任务..."
@@ -41,9 +48,9 @@ run_collector() {
 run_collector
 
 if [ "$RUN_MODE" = "once" ]; then
-    echo "✅ 一次性任务完成，HTTP 服务器继续运行"
-    echo "📺 访问地址: http://localhost:${WEB_SERVER_PORT:-8080}/tv.m3u"
-    echo "📄 TXT 地址: http://localhost:${WEB_SERVER_PORT:-8080}/tv.txt"
-    echo "🔄 多源切换地址: http://localhost:${WEB_SERVER_PORT:-8080}/tv_multi.m3u"
-    wait $HTTP_PID
+    echo "✅ 一次性任务完成，Web 服务继续运行"
+    echo "📺 访问地址: http://localhost:${WEB_SERVER_PORT:-8080}/"
+    echo "📄 TV列表: http://localhost:${WEB_SERVER_PORT:-8080}/tv.m3u"
+    echo "🔄 多源切换: http://localhost:${WEB_SERVER_PORT:-8080}/tv_multi.m3u"
+    wait $WEB_PID
 fi
