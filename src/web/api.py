@@ -33,9 +33,12 @@ def get_status():
     last_run = None
     stats_file = OUTPUT_DIR / "stats.json"
     if stats_file.exists():
-        with open(stats_file, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            last_run = data.get('timestamp')
+        try:
+            with open(stats_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                last_run = data.get('timestamp')
+        except:
+            pass
     
     return jsonify({
         'stable_count': len(stable_sources),
@@ -43,7 +46,7 @@ def get_status():
         'pool_total': pool_stats.get('total', 0),
         'candidate_observing': candidate_stats.get('observing', 0),
         'last_run': last_run,
-        'status': 'running'  # 简单状态
+        'status': 'running'
     })
 
 # ---------- 频道列表 ----------
@@ -60,11 +63,9 @@ def get_channels():
     for name, src in sources.items():
         if not src.url:
             continue
-        # 搜索过滤
         if search and search not in name.lower():
             continue
-        # 分类过滤（可根据 group_title 或 demo_category）
-        # 目前我们按频道名前缀简单判断
+        # 简单分类
         cat = '其他'
         if name.startswith('CCTV'):
             cat = '央视'
@@ -72,7 +73,7 @@ def get_channels():
             cat = '卫视'
         elif '频道' in name and not name.startswith('CCTV'):
             cat = '地方'
-        elif '港' in name or '澳' in name or '台' in name:
+        elif any(kw in name for kw in ['港', '澳', '台', 'TVB', '凤凰']):
             cat = '港澳台'
         
         if category and cat != category:
@@ -88,7 +89,6 @@ def get_channels():
             'last_verified': src.last_verified.isoformat() if src.last_verified else None
         })
     
-    # 按名称排序
     channels.sort(key=lambda x: x['name'])
     return jsonify(channels)
 
@@ -139,13 +139,33 @@ def get_config():
 def update_config():
     """更新配置（需重启生效）"""
     data = request.get_json()
-    # 注意：修改配置需要持久化到 .env 或 config.py，这里仅演示
-    # 实际项目中可写入 .env 文件
-    # 这里我们简单返回成功，并提示重启
-    return jsonify({
-        'success': True,
-        'message': '配置已更新，请重启服务生效。'
-    })
+    # 写入 .env 文件
+    env_path = Path('.env')
+    # 读取现有内容
+    if env_path.exists():
+        with open(env_path, 'r') as f:
+            lines = f.readlines()
+    else:
+        lines = []
+    # 更新或追加
+    updated_keys = set()
+    new_lines = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped and not stripped.startswith('#'):
+            key = stripped.split('=')[0].strip()
+            if key in data:
+                new_lines.append(f"{key}={data[key]}\n")
+                updated_keys.add(key)
+                continue
+        new_lines.append(line)
+    # 添加未存在的键
+    for key, value in data.items():
+        if key not in updated_keys:
+            new_lines.append(f"{key.upper()}={value}\n")
+    with open(env_path, 'w') as f:
+        f.writelines(new_lines)
+    return jsonify({'success': True, 'message': '配置已更新，请重启服务生效。'})
 
 # ---------- 质量趋势 ----------
 @api_bp.route('/quality/<channel_name>')
