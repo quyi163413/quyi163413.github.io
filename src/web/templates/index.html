@@ -21,6 +21,7 @@
         .table th { border-bottom: 2px solid #3d444b; color: #adb5bd; }
         .badge-fixed { background-color: #0d6efd; color: #fff; padding: 0.35em 0.65em; border-radius: 0.25rem; }
         .badge-normal { background-color: #6c757d; color: #fff; padding: 0.35em 0.65em; border-radius: 0.25rem; }
+        #collect-log { height: 400px; overflow-y: auto; background: #1a1d20; color: #e9ecef; padding: 10px; border-radius: 4px; font-size: 12px; white-space: pre-wrap; word-break: break-all; font-family: monospace; }
         @media (max-width: 768px) { .sidebar { position: relative; width: 100%; height: auto; } main { margin-left: 0; } }
     </style>
 </head>
@@ -39,6 +40,7 @@
                         <li class="nav-item"><a class="nav-link" href="#" data-page="fixed"><i class="fas fa-thumbtack me-2"></i>固定源管理</a></li>
                         <li class="nav-item"><a class="nav-link" href="#" data-page="config"><i class="fas fa-cog me-2"></i>配置管理</a></li>
                         <li class="nav-item"><a class="nav-link" href="#" data-page="quality"><i class="fas fa-chart-line me-2"></i>质量趋势</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#" data-page="collector"><i class="fas fa-play-circle me-2"></i>采集控制</a></li>
                     </ul>
                     <hr class="border-secondary">
                     <div class="text-center text-muted small" id="last-update">更新于: --</div>
@@ -63,6 +65,7 @@
         // ========== 全局变量 ==========
         const API_BASE = '/api';
         let qualityChartInstance = null;
+        let collectorPolling = false;
 
         // ========== 导航 ==========
         document.addEventListener('DOMContentLoaded', function() {
@@ -91,6 +94,7 @@
                     case 'fixed': title.textContent = '📌 固定源管理'; await renderFixed(content); break;
                     case 'config': title.textContent = '⚙️ 配置管理'; await renderConfig(content); break;
                     case 'quality': title.textContent = '📈 质量趋势'; await renderQuality(content); break;
+                    case 'collector': title.textContent = '⚙️ 采集控制'; await renderCollector(content); break;
                     default: content.innerHTML = '<div class="alert alert-warning">页面未找到</div>';
                 }
             } catch(e) {
@@ -99,7 +103,7 @@
             }
         }
 
-        // ===== 仪表盘 =====
+        // ===== 仪表盘 (不变) =====
         async function renderDashboard(container) {
             const resp = await fetch(`${API_BASE}/status`);
             const data = await resp.json();
@@ -115,7 +119,7 @@
             document.getElementById('last-update').textContent = '更新于: ' + new Date().toLocaleString();
         }
 
-        // ===== 频道列表 =====
+        // ===== 频道列表 (不变) =====
         async function renderChannels(container) {
             container.innerHTML = `
                 <div class="row mb-3">
@@ -190,7 +194,7 @@
             }
         }
 
-        // ===== 固定源管理 =====
+        // ===== 固定源管理 (不变) =====
         async function renderFixed(container) {
             container.innerHTML = `
                 <div class="row mb-3">
@@ -284,7 +288,7 @@
             }
         }
 
-        // ===== 配置管理 =====
+        // ===== 配置管理 (不变) =====
         async function renderConfig(container) {
             container.innerHTML = `
                 <div class="card">
@@ -326,7 +330,6 @@
                     </div>
                 </div>
             `;
-            // 加载当前配置
             try {
                 const resp = await fetch(`${API_BASE}/config`);
                 const config = await resp.json();
@@ -336,7 +339,6 @@
                 document.getElementById('cfg-demo-mode').value = config.demo_match_mode || 'contains';
                 document.getElementById('cfg-ffmpeg').checked = config.ffmpeg_enable || false;
             } catch(e) { console.error('加载配置失败', e); }
-            // 提交表单
             document.getElementById('config-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 const data = {
@@ -361,7 +363,7 @@
             });
         }
 
-        // ===== 质量趋势 =====
+        // ===== 质量趋势 (不变) =====
         async function renderQuality(container) {
             container.innerHTML = `
                 <div class="row mb-3">
@@ -442,6 +444,96 @@
                 } catch(e) {
                     alert('查询失败: ' + e.message);
                 }
+            }
+        }
+
+        // ===== 🚀 采集控制 (新增) =====
+        async function renderCollector(container) {
+            container.innerHTML = `
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <button class="btn btn-success me-2" id="start-collect-btn">
+                            <i class="fas fa-play"></i> 开始采集
+                        </button>
+                        <button class="btn btn-danger" id="stop-collect-btn" disabled>
+                            <i class="fas fa-stop"></i> 停止采集
+                        </button>
+                        <span class="ms-3" id="collect-status">状态: 空闲</span>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">实时日志</div>
+                    <div class="card-body">
+                        <pre id="collect-log">等待采集开始...</pre>
+                    </div>
+                </div>
+            `;
+
+            const startBtn = document.getElementById('start-collect-btn');
+            const stopBtn = document.getElementById('stop-collect-btn');
+            const statusEl = document.getElementById('collect-status');
+            const logEl = document.getElementById('collect-log');
+
+            // 启动采集
+            startBtn.addEventListener('click', async () => {
+                try {
+                    const resp = await fetch('/api/collect/start', { method: 'POST' });
+                    const data = await resp.json();
+                    if (data.success) {
+                        startBtn.disabled = true;
+                        stopBtn.disabled = false;
+                        statusEl.textContent = '状态: 运行中...';
+                        logEl.textContent = '采集任务已启动，等待日志输出...\n';
+                        // 开始轮询状态
+                        pollStatus();
+                    } else {
+                        alert(data.message);
+                    }
+                } catch (e) {
+                    alert('启动失败: ' + e.message);
+                }
+            });
+
+            // 停止采集（目前仅禁用按钮，实际停止需实现）
+            stopBtn.addEventListener('click', () => {
+                // 由于采集是异步的，我们无法直接停止，但可以禁用按钮并提示
+                stopBtn.disabled = true;
+                statusEl.textContent = '状态: 正在停止...';
+                // 实际上无法强制停止，但可以设置标志（可选）
+                alert('采集任务将在完成后自动停止。如想强制停止，请重启应用。');
+            });
+
+            let polling = false;
+            async function pollStatus() {
+                if (polling) return;
+                polling = true;
+                while (true) {
+                    try {
+                        const resp = await fetch('/api/collect/status');
+                        const data = await resp.json();
+                        // 更新日志
+                        if (data.log && data.log.length > 0) {
+                            // 只显示最新的日志，避免刷屏
+                            logEl.textContent = data.log.join('\n');
+                            logEl.scrollTop = logEl.scrollHeight;
+                        }
+                        if (!data.running) {
+                            startBtn.disabled = false;
+                            stopBtn.disabled = true;
+                            statusEl.textContent = `状态: 已完成 (${data.result || '未知'})`;
+                            // 如果成功，刷新页面数据（可选）
+                            if (data.result === 'success') {
+                                // 可以刷新仪表盘或频道列表，但暂时不做
+                            }
+                            break;
+                        }
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    } catch (e) {
+                        console.error('获取状态失败', e);
+                        break;
+                    }
+                }
+                polling = false;
             }
         }
     </script>
