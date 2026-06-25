@@ -2,30 +2,23 @@
 """IPTV 智能管理 GUI 工具 - 程序入口"""
 
 import sys
-import os
 import traceback
 from pathlib import Path
+
+# 处理打包后的路径问题
+if getattr(sys, 'frozen', False):
+    # 打包后，_MEIPASS 指向临时解压目录
+    base_path = Path(sys._MEIPASS)
+else:
+    # 开发环境，当前文件所在目录的父目录
+    base_path = Path(__file__).parent.parent
+
+# 将 base_path 添加到 sys.path，确保能导入 src 模块
+sys.path.insert(0, str(base_path))
 
 
 def main():
     try:
-        # 确保当前目录在 sys.path 中（解决打包后模块找不到的问题）
-        current_dir = Path(__file__).parent
-        if str(current_dir) not in sys.path:
-            sys.path.insert(0, str(current_dir))
-        
-        # 如果是打包环境，添加父目录
-        if getattr(sys, 'frozen', False):
-            # PyInstaller 打包环境
-            base_dir = Path(sys.executable).parent
-            if str(base_dir) not in sys.path:
-                sys.path.insert(0, str(base_dir))
-        else:
-            # 开发环境
-            base_dir = current_dir.parent
-            if str(base_dir) not in sys.path:
-                sys.path.insert(0, str(base_dir))
-        
         from PySide6.QtWidgets import QApplication
         from PySide6.QtCore import Qt
         from src.gui.main_window import IPTVMainWindow
@@ -37,22 +30,23 @@ def main():
         app = QApplication(sys.argv)
         app.setApplicationName("IPTV 智能管理工具")
         app.setOrganizationName("IPTVCollector")
-        
+
         setup_gui_logging()
-        
+
         window = IPTVMainWindow()
         window.show()
-        
+
         sys.exit(app.exec())
-    
+
     except Exception as e:
+        # 将错误写入 error.log 文件
         error_msg = traceback.format_exc()
         try:
             with open("error.log", "w", encoding="utf-8") as f:
                 f.write(error_msg)
         except:
             pass
-        
+
         print("=" * 60)
         print("程序启动失败！")
         print("错误信息已写入 error.log")
