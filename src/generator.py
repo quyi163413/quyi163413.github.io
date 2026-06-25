@@ -164,4 +164,4 @@ def generate_outputs_from_demo(ordered_channels: List[dict], demo_order: List[Tu
     generate_txt_by_demo_order(channels_by_name, demo_order, OUTPUT_DIR / TXT_FILE)
     
     # 生成多源 M3U 文件
-    generate_multi_m3u_by_demo_order(channels_by_name, demo_order, OUTPUT_DIR / "tv_multi.m3u")
+    generate_multi_m3u_by_demo_order(channels_by_name, demo_order, OUTPUT_DIR / "tv_multi.m3u") 
