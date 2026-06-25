@@ -1,28 +1,34 @@
 # build.spec
+# PyInstaller 打包配置文件
+
 import sys
 from pathlib import Path
 
-# 创建 resources 目录（如果不存在）
+# 确保 resources 目录存在
 Path('resources').mkdir(exist_ok=True)
 
 block_cipher = None
 
+# 检查图标是否存在
 icon_path = Path('resources/icon.ico')
-icon_file = str(icon_path) if icon_path.exists() else None
+if icon_path.exists():
+    icon_file = str(icon_path)
+else:
+    icon_file = None
 
 a = Analysis(
     ['src/main.py'],
-    pathex=['.'],  # 将当前目录添加到 Python 搜索路径
+    pathex=[],  # 不添加额外路径，运行时通过 sys.path 处理
     binaries=[],
     datas=[
+        ('src', 'src'),              # 将整个 src 目录复制到输出目录的 src 子目录
         ('alias.txt', '.'),
         ('blacklist.txt', '.'),
         ('demo.txt', '.'),
         ('resources', 'resources'),
-        ('src', 'src'),  # 关键：复制整个 src 目录
     ],
     hiddenimports=[
-        # 核心模块
+        # 核心模块（已经通过 datas 复制，但为了保险仍列出）
         'src.config',
         'src.run',
         'src.fetcher',
@@ -48,18 +54,18 @@ a = Analysis(
         'src.quality',
         'src.quality.monitor',
         'src.orchestrator',
-        # 扩展功能
+        # 扩展
         'src.iptv_org_adapter',
         'src.global_channels',
         'src.generator_enhanced',
         'src.overseas_filter',
         'src.special_categories',
-        # GUI 模块
+        # GUI
         'src.gui',
         'src.gui.main_window',
         'src.gui.widgets',
         'src.gui.styles',
-        # 工具模块
+        # Utils
         'src.utils',
         'src.utils.logger_handler',
         # 第三方库
