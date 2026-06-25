@@ -178,12 +178,12 @@ WEB_UI_ENABLE = os.getenv("WEB_UI_ENABLE", "true").lower() == "true"
 WEB_UI_TITLE = os.getenv("WEB_UI_TITLE", "IPTV 智能管理面板")
 
 # ========== GitHub 代理配置（用于 proxy_utils.py） ==========
-ENABLE_GITHUB_PROXY = os.getenv("ENABLE_GITHUB_PROXY", "true").lower() == "true"
+ENABLE_GITHUB_PROXY = os.getenv("ENABLE_GITHUB_PROXY", "false").lower() == "true"
 GITHUB_PROXY_TIMEOUT = int(os.getenv("GITHUB_PROXY_TIMEOUT", 15))
 GITHUB_RAW_PROXIES = [
     "https://ghproxy.net/",
-    "https://gh.api.99988866.xyz/",
-    "https://raw.kkgithub.com/",
+    "https://gh-proxy.19860519.xyz/",
+    "https://ghproxy.19860519.xyz/",
 ]
 
 # 打印自治模式状态
