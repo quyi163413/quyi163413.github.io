@@ -23,8 +23,8 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("IPTV 智能管理")
         self.setGeometry(100, 100, 1200, 800)
 
-        # 启动后台 Flask 服务器
-        self.port = random.randint(49152, 65535)  # 随机端口
+        # 启动后台 Flask 服务器（随机端口）
+        self.port = random.randint(49152, 65535)
         self.server_thread = threading.Thread(
             target=run_server_in_thread,
             args=(self.port,),
@@ -32,7 +32,7 @@ class MainWindow(QMainWindow):
         )
         self.server_thread.start()
 
-        # 等待服务器启动
+        # 等待服务器启动后加载页面
         QTimer.singleShot(2000, self.load_web)
 
     def load_web(self):
