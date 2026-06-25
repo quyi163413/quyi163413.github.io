@@ -32,8 +32,8 @@ jobs:
     
     - name: 创建资源目录
       run: |
-        mkdir resources
-        # 如果有图标文件，复制到 resources 目录
+        mkdir resources -Force
+        echo "No icon" > resources/placeholder.txt
     
     - name: 打包成 exe
       run: |
