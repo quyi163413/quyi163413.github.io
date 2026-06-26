@@ -22,26 +22,23 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Upgrade pip and install PyQt5 first
+      - name: Upgrade pip and install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install --no-cache-dir PyQt5
           pip install --no-cache-dir pyinstaller
-
-      - name: Install other dependencies
-        run: |
           pip install -r requirements.txt
 
       - name: Verify PyQt5 installed
         run: |
           python -c "import PyQt5; print('PyQt5 installed')"
 
-      - name: Prepare GUI directories and __init__.py files (Windows)
+      - name: Clean and rebuild gui directory with correct __init__.py
         run: |
-          # 创建目录
+          Remove-Item -Path gui -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path gui
           New-Item -ItemType Directory -Force -Path gui/resources
           New-Item -ItemType Directory -Force -Path gui/styles
-          # 创建 __init__.py 文件，确保内容为有效 Python
           Set-Content -Path gui/__init__.py -Value "# gui package"
           Set-Content -Path gui/resources/__init__.py -Value "# placeholder"
           Set-Content -Path gui/styles/dark_theme.qss -Value "/* placeholder */"
@@ -62,6 +59,20 @@ jobs:
             --hidden-import src `
             --name "IPTV_Collector" `
             gui/main.py
+
+      - name: Copy config files to dist
+        run: |
+          # 确保目标目录存在
+          New-Item -ItemType Directory -Force -Path dist/IPTV_Collector
+          # 复制配置文件（如果存在）
+          if (Test-Path demo.txt) { Copy-Item -Path demo.txt -Destination dist/IPTV_Collector/ -Force }
+          if (Test-Path alias.txt) { Copy-Item -Path alias.txt -Destination dist/IPTV_Collector/ -Force }
+          if (Test-Path blacklist.txt) { Copy-Item -Path blacklist.txt -Destination dist/IPTV_Collector/ -Force }
+          if (Test-Path fixed_sources.py) { Copy-Item -Path fixed_sources.py -Destination dist/IPTV_Collector/ -Force }
+          # 创建默认 demo.txt（如果不存在）
+          if (-not (Test-Path dist/IPTV_Collector/demo.txt)) {
+            Set-Content -Path dist/IPTV_Collector/demo.txt -Value "# 默认 demo 列表`n央视,#genre#`nCCTV-1`nCCTV-2`nCCTV-3"
+          }
 
       - name: Compress output folder to zip
         run: |
