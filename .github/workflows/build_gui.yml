@@ -33,12 +33,10 @@ jobs:
         run: |
           python -c "import PyQt5; print('PyQt5 installed')"
 
-      - name: Ensure gui __init__.py and directories exist (do NOT delete gui folder)
+      - name: Ensure gui __init__.py exists
         run: |
-          # 创建必要的子目录（如果不存在）
           New-Item -ItemType Directory -Force -Path gui/resources
           New-Item -ItemType Directory -Force -Path gui/styles
-          # 修复 __init__.py 内容（如果已存在则覆盖）
           Set-Content -Path gui/__init__.py -Value "# gui package"
           Set-Content -Path gui/resources/__init__.py -Value "# placeholder"
           Set-Content -Path gui/styles/dark_theme.qss -Value "/* placeholder */"
