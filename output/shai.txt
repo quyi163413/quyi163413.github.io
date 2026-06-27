@@ -1,7 +1,7 @@
 # Demo筛选丢弃的频道
-# 原始频道总数: 415
-# Demo匹配成功: 325
-# 丢弃数量: 90
+# 原始频道总数: 417
+# Demo匹配成功: 326
+# 丢弃数量: 91
 
 CNA,https://d2e1asnsl7br7b.cloudfront.net/7782e205e72f43aeb4a48ec97f66ebbe/index_5.m3u8
 Supreme Master TV,https://lbs-us1.suprememastertv.com/720p.m3u8
@@ -31,8 +31,8 @@ TVB Plus,http://r.jdshipin.com/Nr5jq
 泰山望人松,https://gcalic.v.myalicdn.com/gc/taishan02_1/index.m3u8
 黄果树六角亭瀑布,https://gcalic.v.myalicdn.com/gc/hgsspzxdpb_1/index.m3u8
 泰山主峰,https://gcalic.v.myalicdn.com/gc/taishan01_1/index.m3u8
-鸣沙山,https://gcalic.v.myalicdn.com/gc/dhyyqst_1/index.m3u8
 萧山新闻综合 [Not 24/7],https://l.cztvcloud.com/channels/lantian/SXxiaoshan1/720p.m3u8
+鸣沙山,https://gcalic.v.myalicdn.com/gc/dhyyqst_1/index.m3u8
 泰山十八盘,https://gcalic.v.myalicdn.com/gc/taishan05_1/index.m3u8
 乌镇龙形田,https://gcalic.v.myalicdn.com/gc/zjwzlxt_1/index.m3u8
 Wild Earth,https://wildearth-plex.amagi.tv/masterR1080p.m3u8
@@ -91,5 +91,6 @@ RT Doc-Русский,https://rt-doc.rttv.com/dvr/rtdru/rtdru1080.m3u8
 文物宝库,http://1.94.31.214/php/hntv.php?id=wwbk
 象视界,http://1.94.31.214/php/hntv.php?id=xsj
 2024年春晚,https://p2.bdstatic.com/rtmp.liveshow.lss-user.baidubce.com/live/stream_bduid_6488563992_8982723413/merged_1707497046297_88536_25144_41936.m3u8
+上虞3新商都 [Not 24/7],https://l.cztvcloud.com/channels/lantian/SXshangyu3/720p.m3u8
 辉南新闻,http://stream5.jlntv.cn/hn/sd/live.m3u8?zjild
 餘姚姚江文化 [Not 24/7],https://l.cztvcloud.com/channels/lantian/SXyuyao2/720p.m3u8
