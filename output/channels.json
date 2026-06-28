@@ -1,7 +1,7 @@
 {
   "version": "2.0",
-  "total": 326,
-  "generated": "2026-06-28T09:01:21.784509",
+  "total": 325,
+  "generated": "2026-06-28T13:57:49.619226",
   "channels": [
     {
       "name": "CCTV-1",
@@ -571,15 +571,6 @@
       "category": "☘️重庆频道"
     },
     {
-      "name": "东莞新闻综合",
-      "urls": [
-        "https://stream.sun0769.com/dgrtv1/mp4tv1_800/index.m3u8"
-      ],
-      "latency": 6216,
-      "codec": "h264",
-      "category": "☘️广东频道"
-    },
-    {
       "name": "东莞生活资讯",
       "urls": [
         "https://stream.sun0769.com/dgrtv1/mp4tv2_800/index.m3u8"
@@ -1019,10 +1010,10 @@
     {
       "name": "余姚新闻综合",
       "urls": [
-        "https://l.cztvcloud.com/channels/lantian/SXyuyao1/720p.m3u8",
-        "http://l.cztvcloud.com/channels/lantian/SXyuyao1/720p.m3u8"
+        "http://l.cztvcloud.com/channels/lantian/SXyuyao1/720p.m3u8",
+        "https://l.cztvcloud.com/channels/lantian/SXyuyao1/720p.m3u8"
       ],
-      "latency": 3888,
+      "latency": 2198,
       "codec": "h264",
       "category": "☘️浙江频道"
     },
@@ -1464,7 +1455,7 @@
       "urls": [
         "http://stream.jmtv.com.cn/xwzh/sd/live.m3u8"
       ],
-      "latency": 2626,
+      "latency": 2174,
       "codec": "h264",
       "category": "☘️湖北频道"
     },
