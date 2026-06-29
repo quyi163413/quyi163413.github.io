@@ -1,7 +1,7 @@
 {
   "version": "2.0",
-  "total": 345,
-  "generated": "2026-06-29T11:10:59.570928",
+  "total": 347,
+  "generated": "2026-06-29T15:56:39.273648",
   "channels": [
     {
       "name": "CCTV-1",
@@ -1048,9 +1048,10 @@
     {
       "name": "余姚新闻综合",
       "urls": [
+        "https://l.cztvcloud.com/channels/lantian/SXyuyao1/720p.m3u8",
         "http://l.cztvcloud.com/channels/lantian/SXyuyao1/720p.m3u8"
       ],
-      "latency": 2198,
+      "latency": 526,
       "codec": "h264",
       "category": "☘️浙江频道"
     },
@@ -1060,7 +1061,7 @@
         "https://l.cztvcloud.com/channels/lantian/SXyuyao3/720p.m3u8",
         "https://l.cztvcloud.com/channels/lantian/SXyuyao3/720p.m3u8"
       ],
-      "latency": 584,
+      "latency": 525,
       "codec": "h264",
       "category": "☘️浙江频道"
     },
@@ -1452,6 +1453,15 @@
       "category": "☘️福建频道"
     },
     {
+      "name": "福建旅游",
+      "urls": [
+        "https://live.264788.xyz/channel/fujianlvyou?streamid=8f26765ebf367079cef58c6b7752da1e&livekey=01WgOR41rriMmMkzNsd0UoaxJRwetZdxIvtVk"
+      ],
+      "latency": 2192,
+      "codec": "h264",
+      "category": "☘️福建频道"
+    },
+    {
       "name": "梨园",
       "urls": [
         "https://dxtx.hntv.tv/live/lypd.m3u8?txSecret=10c771842a0be59e8b575d765173ec96&txTime=7B923E0A&wsSecret=41543190cdf375f1c73207222bb96542&wsTime=1769313549"
@@ -1528,7 +1538,7 @@
       "urls": [
         "http://stream.jmtv.com.cn/xwzh/sd/live.m3u8"
       ],
-      "latency": 2174,
+      "latency": 1640,
       "codec": "h264",
       "category": "☘️湖北频道"
     },
@@ -1908,6 +1918,15 @@
         "https://gcalic.v.myalicdn.com/gc/hlzycc_1/index.m3u8"
       ],
       "latency": 577,
+      "codec": "h264",
+      "category": "☘️陕西频道"
+    },
+    {
+      "name": "新昌休闲影视 [Not 24/7]",
+      "urls": [
+        "https://l.cztvcloud.com/channels/lantian/SXxinchang2/720p.m3u8"
+      ],
+      "latency": 2659,
       "codec": "h264",
       "category": "☘️陕西频道"
     },
