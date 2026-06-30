@@ -1,7 +1,7 @@
 {
   "version": "2.0",
-  "total": 325,
-  "generated": "2026-06-30T14:30:12.879071",
+  "total": 326,
+  "generated": "2026-06-30T20:06:47.617842",
   "channels": [
     {
       "name": "CCTV-1",
@@ -581,6 +581,15 @@
       "category": "☘️广东频道"
     },
     {
+      "name": "东莞生活资讯",
+      "urls": [
+        "https://stream.sun0769.com/dgrtv1/mp4tv2_800/index.m3u8"
+      ],
+      "latency": 1808,
+      "codec": "h264",
+      "category": "☘️广东频道"
+    },
+    {
       "name": "南国都市",
       "urls": [
         "https://tencentplay.gztv.com/live/nanguodushi.m3u8?txSecret=550af55c0ea34ce492748481415b6dfa&txTime=1903e7b17de",
@@ -1014,7 +1023,7 @@
         "https://l.cztvcloud.com/channels/lantian/SXyuyao1/720p.m3u8",
         "http://l.cztvcloud.com/channels/lantian/SXyuyao1/720p.m3u8"
       ],
-      "latency": 526,
+      "latency": 926,
       "codec": "h264",
       "category": "☘️浙江频道"
     },
@@ -1023,7 +1032,7 @@
       "urls": [
         "https://l.cztvcloud.com/channels/lantian/SXyuyao3/720p.m3u8"
       ],
-      "latency": 525,
+      "latency": 423,
       "codec": "h264",
       "category": "☘️浙江频道"
     },
@@ -1033,6 +1042,15 @@
         "http://l.cztvcloud.com/channels/lantian/SXyunhe1/720p.m3u8"
       ],
       "latency": 589,
+      "codec": "h264",
+      "category": "☘️浙江频道"
+    },
+    {
+      "name": "义乌新闻综合",
+      "urls": [
+        "https://44911.hlsplay.aodianyun.com/tv_radio_44911/tv_channel_1796.m3u8?auth_key=4830573978-0-0-92824c2c03f95906a3c49a4aa28f1709&extra_key=Yc1XsmxOKy2UBoPM4Wy5vCPsEYqnj06taCR2SRB2Xrg2w28NPilH03KdIbbM5wgSql-VBohSnoO9AOKl94q2t2DWMftz-XB-2qUX-UjXcS80StcSZahBFjrKLivXaRjiY5r2NOMKWMKFbv-S0Bz2G6iEXgCK8yGjtrFHDcPfAQEE0pvXq0Bwy34b7We8zARN&ali_ffmpeg_version=mpengine"
+      ],
+      "latency": 1504,
       "codec": "h264",
       "category": "☘️浙江频道"
     },
@@ -1406,15 +1424,6 @@
       "category": "☘️福建频道"
     },
     {
-      "name": "福建公共",
-      "urls": [
-        "https://live.264788.xyz/channel/fujianxiangcungonggong?streamid=2987cc24bada6a8c25589409a6452d9e&livekey=01WgOR41rriMmMkzNsd0UoaxJRwetZdxIvtVk"
-      ],
-      "latency": 5677,
-      "codec": "h264",
-      "category": "☘️福建频道"
-    },
-    {
       "name": "梨园",
       "urls": [
         "https://dxtx.hntv.tv/live/lypd.m3u8?txSecret=10c771842a0be59e8b575d765173ec96&txTime=7B923E0A&wsSecret=41543190cdf375f1c73207222bb96542&wsTime=1769313549"
@@ -1491,7 +1500,7 @@
       "urls": [
         "http://stream.jmtv.com.cn/xwzh/sd/live.m3u8"
       ],
-      "latency": 1640,
+      "latency": 1093,
       "codec": "h264",
       "category": "☘️湖北频道"
     },
@@ -1762,7 +1771,7 @@
       "urls": [
         "https://l.cztvcloud.com/channels/lantian/SXxinchang2/720p.m3u8"
       ],
-      "latency": 2659,
+      "latency": 593,
       "codec": "h264",
       "category": "☘️陕西频道"
     },
@@ -1825,7 +1834,7 @@
       "urls": [
         "http://liveout.btzx.com.cn/62ds9e/4nxdih.m3u8?fbl="
       ],
-      "latency": 5750,
+      "latency": 1663,
       "codec": "h264",
       "category": "☘️新疆频道"
     },
